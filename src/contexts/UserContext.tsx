@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useUser } from "@clerk/nextjs";
 
 interface UserData {
-  role: "buyer" | "seller" | null;
+  role: "buyer" | "seller" | "superAdmin" | null;
   hasInstitutionProfile: boolean;
   hasVendorProfile: boolean;
   profileCompletedAt?: Date;
@@ -15,7 +15,7 @@ interface UserContextType {
   userData: UserData | null;
   isLoading: boolean;
   refetch: () => Promise<void>;
-  updateRole: (role: "buyer" | "seller" | null) => void;
+  updateRole: (role: "buyer" | "seller" | "superAdmin" | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);

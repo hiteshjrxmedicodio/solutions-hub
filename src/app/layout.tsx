@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Healthcare AI Solutions Hub",
+  title: "Astro Vault",
   description: "Transforming healthcare with AI innovation",
 };
 

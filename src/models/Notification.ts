@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface INotification extends Document {
   userId: string; // Clerk user ID
-  type: 'match' | 'message' | 'profile_update' | 'system' | 'match_interest';
+  type: 'match' | 'message' | 'profile_update' | 'system' | 'match_interest' | 'vendor_created' | 'customer_started_using_vendor' | 'new_listing' | 'solution_published' | 'proposal_received' | 'proposal_accepted' | 'proposal_rejected' | 'listing_status_changed';
   title: string;
   message: string;
   
@@ -31,7 +31,7 @@ const NotificationSchema: Schema = new Schema(
     },
     type: {
       type: String,
-      enum: ['match', 'message', 'profile_update', 'system', 'match_interest'],
+      enum: ['match', 'message', 'profile_update', 'system', 'match_interest', 'vendor_created', 'customer_started_using_vendor', 'new_listing', 'solution_published', 'proposal_received', 'proposal_accepted', 'proposal_rejected', 'listing_status_changed'],
       required: true,
       index: true,
     },

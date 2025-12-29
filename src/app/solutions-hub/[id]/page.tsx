@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useUserData } from "@/contexts/UserContext";
-import { HamburgerMenu } from "@/components/HamburgerMenu";
+import { Sidebar } from "@/components/Sidebar";
 
 interface SolutionCardData {
   id: number;
@@ -26,11 +26,13 @@ export default function SolutionDetailPage() {
   const [solution, setSolution] = useState<SolutionCardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   // Redirect vendors away from solution detail pages
   useEffect(() => {
-    if (isLoaded && !isLoadingUserData && user && userRole === "seller") {
-      router.push("/profile");
+    if (isLoaded && !isLoadingUserData && user && userRole === "seller" && user.id) {
+      router.push(`/vendor/${user.id}`);
     }
   }, [isLoaded, isLoadingUserData, user, userRole, router]);
 
@@ -71,15 +73,15 @@ export default function SolutionDetailPage() {
   // Show loading while checking user role or fetching solution
   if (!isLoaded || isLoadingUserData || loading) {
     return (
-      <main className="min-h-screen bg-white">
-        <HamburgerMenu 
-          isOpen={true} 
-          onToggle={() => {}}
-          onClose={() => {}}
-          isClosable={false}
-          showShadow={false}
+      <main className="min-h-screen bg-white flex overflow-y-auto" style={{ height: "100vh", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          onClose={() => setIsSidebarOpen(false)}
+          isCollapsed={isSidebarCollapsed}
+          onCollapseToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
-        <div className="max-w-4xl mx-auto px-6 py-16 pt-28 flex items-center justify-center">
+        <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "lg:ml-16" : "lg:ml-64"} max-w-4xl mx-auto px-6 py-16 pt-8 flex items-center justify-center`}>
           <div className="text-zinc-600">Loading...</div>
         </div>
       </main>
@@ -93,15 +95,13 @@ export default function SolutionDetailPage() {
 
   if (error || !solution) {
     return (
-      <main className="min-h-screen bg-white">
-        <HamburgerMenu 
-          isOpen={true} 
-          onToggle={() => {}}
-          onClose={() => {}}
-          isClosable={false}
-          showShadow={false}
+      <main className="min-h-screen bg-white flex overflow-y-auto" style={{ height: "100vh", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          onClose={() => setIsSidebarOpen(false)}
         />
-        <div className="max-w-4xl mx-auto px-6 py-16 pt-28">
+        <div className="flex-1 lg:ml-64 max-w-4xl mx-auto px-6 py-16 pt-8">
           <div className="text-red-600">Error: {error || "Solution not found"}</div>
         </div>
       </main>
@@ -109,16 +109,16 @@ export default function SolutionDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Navigation Bar - Always Open, Not Closable */}
-      <HamburgerMenu 
-        isOpen={true} 
-        onToggle={() => {}}
-        onClose={() => {}}
-        isClosable={false}
+    <main className="min-h-screen bg-white flex overflow-y-auto" style={{ height: "100vh", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onClose={() => setIsSidebarOpen(false)}
+        isCollapsed={isSidebarCollapsed}
+        onCollapseToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
       
-      <div className="max-w-4xl mx-auto px-6 py-16 pt-28">
+      <div className={`flex-1 transition-all duration-300 ${isSidebarCollapsed ? "lg:ml-16" : "lg:ml-64"} max-w-4xl mx-auto px-6 py-16 pt-8`}>
         <div className="space-y-8">
           {/* Header */}
           <div className="space-y-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { SolutionsGrid } from "@/components/SolutionsGrid";
+import { SolutionsGrid } from "./components/SolutionsGrid";
 import { OnboardingGuard } from "@/components/OnboardingGuard";
 import { useUser } from "@clerk/nextjs";
 import { useUserData } from "@/contexts/UserContext";
@@ -15,8 +15,8 @@ function SolutionsHubContent() {
 
   useEffect(() => {
     // Redirect vendors away from Solutions Hub
-    if (isLoaded && !isLoadingUserData && user && userRole === "seller") {
-      router.push("/profile");
+    if (isLoaded && !isLoadingUserData && user && userRole === "seller" && user.id) {
+      router.push(`/vendor/${user.id}`);
     }
   }, [isLoaded, isLoadingUserData, user, userRole, router]);
 

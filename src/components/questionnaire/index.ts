@@ -1,8 +1,5 @@
-// Main component
-export { InstitutionQuestionnaire } from "../InstitutionQuestionnaire";
-
 // Types
-export type { QuestionnaireData, InstitutionQuestionnaireProps, StepProps } from "./types";
+export type { QuestionnaireData, StepProps } from "./types";
 
 // Constants
 export * from "./constants";

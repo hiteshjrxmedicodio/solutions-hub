@@ -5,15 +5,12 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useUserData } from "@/contexts/UserContext";
 import { RoleSelection } from "./RoleSelection";
-import { InstitutionQuestionnaire } from "./InstitutionQuestionnaire";
-import { VendorQuestionnaire } from "./vendor-questionnaire/VendorQuestionnaire";
 
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser();
   const { userData, isLoading: isLoadingUserData } = useUserData();
   const router = useRouter();
   const [isRoleSelectionOpen, setIsRoleSelectionOpen] = useState(false);
-  const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
 
   const userRole = userData?.role;
   const isLoading = !isLoaded || isLoadingUserData;
@@ -39,10 +36,18 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
       if (result.success) {
         updateRole(role);
         setIsRoleSelectionOpen(false);
-        // Automatically open questionnaire after role selection
-        setIsQuestionnaireOpen(true);
         // Refetch to get latest data
         await refetchUserData();
+        // Redirect based on role after role selection
+        const userEmail = user?.emailAddresses[0]?.emailAddress || "";
+        // Special case: Link hitesh.ms24@gmail.com to seed-medicodio vendor page
+        if (userEmail === "hitesh.ms24@gmail.com") {
+          router.push("/vendor/seed-medicodio");
+        } else if (role === "seller" && user?.id) {
+          router.push(`/vendor/${user.id}`);
+        } else if (role === "buyer") {
+          router.push("/solutions-hub");
+        }
       } else {
         alert("Error saving role: " + result.error);
       }
@@ -52,32 +57,6 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleQuestionnaireSave = async (data: any) => {
-    if (!userRole || !user?.id) return;
-
-    try {
-      const endpoint = userRole === "buyer" ? "/api/institution" : "/api/vendor";
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setIsQuestionnaireOpen(false);
-        // Refetch user data to update cache
-        await refetchUserData();
-        // Redirect to profile page after questionnaire completion
-        router.push("/profile");
-      } else {
-        alert("Error saving profile: " + result.error);
-      }
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      alert("Error saving profile. Please try again.");
-    }
-  };
 
   // Show loading state
   if (!isLoaded || isLoading) {
@@ -96,8 +75,8 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // If user has a role and questionnaire is not open, show children (normal page)
-  if (userRole && !isQuestionnaireOpen) {
+  // If user has a role, show children (normal page)
+  if (userRole) {
     return <>{children}</>;
   }
 
@@ -112,26 +91,6 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
         onClose={() => setIsRoleSelectionOpen(false)}
         onSelect={handleRoleSelect}
       />
-
-      {/* Institution Questionnaire - Only for buyers */}
-      {userRole === "buyer" && (
-        <InstitutionQuestionnaire
-          isOpen={isQuestionnaireOpen}
-          onClose={() => setIsQuestionnaireOpen(false)}
-          onSave={handleQuestionnaireSave}
-          initialData={{}}
-        />
-      )}
-
-      {/* Vendor Questionnaire - Only for sellers */}
-      {userRole === "seller" && (
-        <VendorQuestionnaire
-          isOpen={isQuestionnaireOpen}
-          onClose={() => setIsQuestionnaireOpen(false)}
-          onSave={handleQuestionnaireSave}
-          initialData={{}}
-        />
-      )}
     </>
   );
 }

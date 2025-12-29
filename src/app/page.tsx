@@ -4,17 +4,26 @@ import { OnboardingGuard } from "@/components/OnboardingGuard";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useUserData } from "@/contexts/UserContext";
 
 function HomeContent() {
   const { user, isLoaded } = useUser();
+  const { userData, isLoading: isLoadingUserData } = useUserData();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded && user) {
-      // Redirect signed-in users to profile
-      router.push("/profile");
+    if (isLoaded && user && !isLoadingUserData && userData) {
+      const userEmail = user.emailAddresses[0]?.emailAddress || "";
+      // Special case: Link hitesh.ms24@gmail.com to seed-medicodio vendor page
+      if (userEmail === "hitesh.ms24@gmail.com") {
+        router.push("/vendor/seed-medicodio");
+      } else if (userData.role === "seller" && user.id) {
+        router.push(`/vendor/${user.id}`);
+      } else if (userData.role === "buyer") {
+        router.push("/solutions-hub");
+      }
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, userData, isLoadingUserData, router]);
 
   if (!isLoaded) {
     return (
@@ -36,7 +45,7 @@ function HomeContent() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-teal-50 to-emerald-50">
       <main className="flex min-h-screen w-full max-w-4xl flex-col items-center justify-center px-8 py-16 text-center">
         <h1 className="text-5xl font-bold text-zinc-900 mb-6">
-          Healthcare AI Solutions Hub
+          Astro Vault
         </h1>
         <p className="text-xl text-zinc-600 mb-8 max-w-2xl">
           Connect healthcare institutions with cutting-edge AI solutions

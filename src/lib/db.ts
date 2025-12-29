@@ -31,7 +31,7 @@ if (MONGODB_URI.includes('mongodb+srv://')) {
     if (lastAtIndex > 0) {
       const beforeAt = MONGODB_URI.substring(0, lastAtIndex);
       const afterAt = MONGODB_URI.substring(lastAtIndex + 1);
-      
+    
       // Extract protocol
       const protocolMatch = beforeAt.match(/^(mongodb\+srv:\/\/)/);
       if (protocolMatch) {
@@ -71,8 +71,8 @@ if (MONGODB_URI.includes('mongodb+srv://')) {
       const hostname = afterAt.substring(0, slashIndex);
       const beforeAt = baseUri.substring(0, lastAtIndex + 1);
       MONGODB_URI = `${beforeAt}${hostname}/solutions-hub${queryParams}`;
-    } else {
-      // No database name, add it
+  } else {
+    // No database name, add it
       MONGODB_URI = `${baseUri}/solutions-hub${queryParams}`;
     }
   }

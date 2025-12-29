@@ -68,13 +68,6 @@ export interface QuestionnaireData {
   additionalNotes: string;
 }
 
-export interface InstitutionQuestionnaireProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: QuestionnaireData) => void;
-  initialData?: Partial<QuestionnaireData>;
-}
-
 export interface StepProps {
   formData: QuestionnaireData;
   updateField: (field: keyof QuestionnaireData, value: any) => void;

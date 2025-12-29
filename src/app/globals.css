@@ -70,12 +70,12 @@ select option {
 }
 
 select option:hover {
-  background-color: #f4f4f5 !important;
+  background-color: #e0f2fe !important; /* blue-50 */
 }
 
 select option:checked,
 select option:focus {
-  background-color: #3b82f6 !important;
+  background: linear-gradient(to right, #2563eb, #0d9488) !important; /* blue-600 to teal-600 */
   color: white !important;
 }
 
