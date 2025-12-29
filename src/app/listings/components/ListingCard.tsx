@@ -61,8 +61,8 @@ export function ListingCard({
       className="group bg-white border border-zinc-200 rounded-xl p-6 hover:shadow-xl hover:border-zinc-300 transition-all duration-200 cursor-pointer h-full flex flex-col hover:-translate-y-0.5"
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg font-bold text-zinc-900 flex-1 line-clamp-2 group-hover:text-zinc-700 transition-colors pr-2">
+      <div className="flex items-start justify-between mb-4 gap-3">
+        <h3 className="text-lg font-bold text-zinc-900 flex-1 line-clamp-2 group-hover:text-zinc-700 transition-colors">
           {title}
         </h3>
         <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border flex-shrink-0 capitalize ${priorityColors[priority]}`}>
@@ -81,13 +81,13 @@ export function ListingCard({
           {category.slice(0, 3).map((cat, idx) => (
             <span
               key={idx}
-              className="px-2.5 py-1 bg-zinc-50 text-zinc-700 rounded-md text-xs font-medium border border-zinc-200 hover:bg-zinc-100 transition-colors"
+              className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-200 hover:bg-blue-100 transition-colors"
             >
               {cat}
             </span>
           ))}
           {category.length > 3 && (
-            <span className="px-2.5 py-1 bg-zinc-50 text-zinc-600 rounded-md text-xs font-medium border border-zinc-200">
+            <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium border border-blue-200">
               +{category.length - 3}
             </span>
           )}

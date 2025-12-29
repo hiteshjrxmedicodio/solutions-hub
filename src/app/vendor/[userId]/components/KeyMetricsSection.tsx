@@ -304,7 +304,7 @@ export function KeyMetricsSection({
                 </div>
 
                 {/* Link URL */}
-                <div>
+    <div>
                   <label className="block text-sm font-semibold text-zinc-700 mb-2">Link URL (Optional)</label>
                   <input
                     type="url"
@@ -339,15 +339,15 @@ export function KeyMetricsSection({
 
       {/* Metrics Cards */}
       {hasMetrics && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {metrics.map((metric, idx) => (
-            <div
-              key={idx}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metrics.map((metric, idx) => (
+          <div
+            key={idx}
               className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 text-center group relative"
-            >
-              <p className="text-sm font-semibold text-blue-900 uppercase tracking-wide mb-2">
-                {metric.label}
-              </p>
+          >
+            <p className="text-sm font-semibold text-blue-900 uppercase tracking-wide mb-2">
+              {metric.label}
+            </p>
               {isEditable ? (
                 <EditableField
                   value={metric.value || ""}
@@ -362,13 +362,13 @@ export function KeyMetricsSection({
                   className="text-2xl font-bold text-blue-600"
                 />
               ) : (
-                <p className="text-2xl font-bold text-blue-600">
-                  {metric.value}
-                </p>
+            <p className="text-2xl font-bold text-blue-600">
+              {metric.value}
+            </p>
               )}
-            </div>
-          ))}
-        </div>
+          </div>
+        ))}
+      </div>
       )}
     </div>
   );

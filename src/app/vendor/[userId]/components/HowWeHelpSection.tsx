@@ -25,7 +25,7 @@ export function HowWeHelpSection({
   const handleSave = async (newValue: string) => {
     if (onSave) {
       await onSave("solutionDescription", newValue);
-    }
+  }
   };
 
   return (

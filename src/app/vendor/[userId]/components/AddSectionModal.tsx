@@ -162,29 +162,29 @@ export function AddSectionModal({
                           )}
                         </div>
                       </div>
-                      {hasSubsections && (
-                        <button
+                          {hasSubsections && (
+                              <button
                           onClick={() => toggleExpand(section.id)}
                           className="p-2 hover:bg-zinc-200 rounded transition-colors flex-shrink-0"
-                          aria-label={isExpanded ? "Collapse subsections" : "Expand subsections"}
-                        >
-                          <svg
-                            className={`w-5 h-5 text-zinc-600 transition-transform ${
-                              isExpanded ? "rotate-180" : ""
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        </button>
-                      )}
+                                aria-label={isExpanded ? "Collapse subsections" : "Expand subsections"}
+                              >
+                                <svg
+                                  className={`w-5 h-5 text-zinc-600 transition-transform ${
+                                    isExpanded ? "rotate-180" : ""
+                                  }`}
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
+                                </svg>
+                              </button>
+                          )}
                   </div>
 
                   {/* Subsections */}

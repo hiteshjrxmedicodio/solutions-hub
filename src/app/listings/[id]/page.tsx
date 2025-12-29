@@ -264,9 +264,8 @@ export default function ListingDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+          {/* Single Column Layout */}
+          <div className="space-y-6">
               {/* Requirements */}
               <div className="bg-white rounded-lg border border-zinc-300 p-6">
                 <h2 className="text-xl font-semibold text-zinc-900 mb-4">Requirements</h2>
@@ -373,64 +372,16 @@ export default function ListingDetailPage() {
               )}
 
               {/* Additional Notes */}
-              {listing.additionalNotes && (
                 <div className="bg-white rounded-lg border border-zinc-300 p-6">
                   <h2 className="text-xl font-semibold text-zinc-900 mb-4">Additional Notes</h2>
+              {listing.additionalNotes ? (
                   <p className="text-zinc-600 whitespace-pre-wrap">{listing.additionalNotes}</p>
-                </div>
-              )}
-
-              {/* Proposals (Owner only) */}
-              {isOwner && listing.proposals && listing.proposals.length > 0 && (
-                <div className="bg-white rounded-lg border border-zinc-300 p-6">
-                  <h2 className="text-xl font-semibold text-zinc-900 mb-4">Proposals ({listing.proposals.length})</h2>
-                  <div className="space-y-4">
-                    {listing.proposals.map((proposal, idx) => (
-                      <div key={idx} className="border border-zinc-200 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-zinc-900">{proposal.vendorName}</h3>
-                            <p className="text-sm text-zinc-500">
-                              {new Date(proposal.submittedAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            proposal.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                            proposal.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-blue-100 text-blue-700'
-                          }`}>
-                            {proposal.status}
-                          </span>
-                        </div>
-                        <p className="text-zinc-600 mb-3">{proposal.proposalText}</p>
-                        {(proposal.proposedPrice || proposal.proposedTimeline) && (
-                          <div className="flex gap-4 text-sm text-zinc-600">
-                            {proposal.proposedPrice && (
-                              <span>Price: {proposal.proposedPrice}</span>
-                            )}
-                            {proposal.proposedTimeline && (
-                              <span>Timeline: {proposal.proposedTimeline}</span>
-                            )}
-                          </div>
-                        )}
-                        <div className="mt-3">
-                          <button
-                            onClick={() => router.push(`/vendor/${proposal.vendorUserId}`)}
-                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                          >
-                            View Vendor Profile →
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              ) : (
+                <p className="text-zinc-500 italic">No additional notes provided.</p>
               )}
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Contact & Actions */}
+            {/* Contact */}
               <div className="bg-white rounded-lg border border-zinc-300 p-6">
                 <h2 className="text-xl font-semibold text-zinc-900 mb-4">Contact</h2>
                 <div className="space-y-2 text-sm">
@@ -566,7 +517,53 @@ export default function ListingDetailPage() {
                   )}
                 </div>
               )}
+
+            {/* Proposals (Owner only) */}
+            {isOwner && listing.proposals && listing.proposals.length > 0 && (
+              <div className="bg-white rounded-lg border border-zinc-300 p-6">
+                <h2 className="text-xl font-semibold text-zinc-900 mb-4">Proposals ({listing.proposals.length})</h2>
+                <div className="space-y-4">
+                  {listing.proposals.map((proposal, idx) => (
+                    <div key={idx} className="border border-zinc-200 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-zinc-900">{proposal.vendorName}</h3>
+                          <p className="text-sm text-zinc-500">
+                            {new Date(proposal.submittedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          proposal.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                          proposal.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {proposal.status}
+                        </span>
+                      </div>
+                      <p className="text-zinc-600 mb-3">{proposal.proposalText}</p>
+                      {(proposal.proposedPrice || proposal.proposedTimeline) && (
+                        <div className="flex gap-4 text-sm text-zinc-600">
+                          {proposal.proposedPrice && (
+                            <span>Price: {proposal.proposedPrice}</span>
+                          )}
+                          {proposal.proposedTimeline && (
+                            <span>Timeline: {proposal.proposedTimeline}</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="mt-3">
+                        <button
+                          onClick={() => router.push(`/vendor/${proposal.vendorUserId}`)}
+                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        >
+                          View Vendor Profile →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
             </div>
+            )}
           </div>
         </div>
       </div>

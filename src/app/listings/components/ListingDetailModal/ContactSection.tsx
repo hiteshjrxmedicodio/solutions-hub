@@ -12,7 +12,7 @@ interface ContactSectionProps {
 export function ContactSection({ listing }: ContactSectionProps) {
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-3 flex-1 flex flex-col">
-      <h2 className="text-lg font-bold text-zinc-900 mb-2">Contact</h2>
+      <h2 className="text-sm font-bold text-zinc-900 mb-2">Contact</h2>
       <div className="space-y-1.5 text-xs flex-1" role="list">
         {listing.contactName && (
           <div role="listitem">

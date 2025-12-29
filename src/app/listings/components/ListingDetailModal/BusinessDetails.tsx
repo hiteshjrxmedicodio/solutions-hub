@@ -7,7 +7,7 @@ interface BusinessDetailsProps {
 export function BusinessDetails({ listing }: BusinessDetailsProps) {
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-3 flex-1 flex flex-col">
-      <h2 className="text-lg font-bold text-zinc-900 mb-2">Business Details</h2>
+      <h2 className="text-sm font-bold text-zinc-900 mb-2">Business Details</h2>
       <div className="space-y-2 text-xs">
         {listing.contractType.length > 0 && (
           <div>

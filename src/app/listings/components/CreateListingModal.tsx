@@ -70,6 +70,16 @@ const COMPLIANCE_OPTIONS = [
   "Other",
 ];
 
+const INSTITUTION_TYPES = [
+  "Hospital",
+  "Clinic",
+  "Health System",
+  "Medical Group",
+  "Specialty Practice",
+  "Urgent Care",
+  "Other",
+];
+
 interface ListingFormData {
   title: string;
   description: string;
@@ -80,10 +90,17 @@ interface ListingFormData {
   technicalRequirements: string[];
   integrationRequirements: string[];
   complianceRequirements: string[];
+  // Institution Context
+  institutionName: string;
+  institutionType: string;
+  medicalSpecialties: string[];
+  currentSystems: string[];
+  // Business Details
   budgetRange: string;
   timeline: string;
   contractType: string[];
   deploymentPreference: string[];
+  // Contact Information
   contactName: string;
   contactEmail: string;
   contactPhone: string;
@@ -100,8 +117,8 @@ interface CreateListingModalProps {
 const STEPS = [
   { id: 1, name: "Basic Information" },
   { id: 2, name: "Requirements" },
-  { id: 3, name: "Business Details" },
-  { id: 4, name: "Contact Information" },
+  { id: 3, name: "Institution Context" },
+  { id: 4, name: "General Information" },
   { id: 5, name: "Review & Submit" },
 ];
 
@@ -120,10 +137,17 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
     technicalRequirements: [],
     integrationRequirements: [],
     complianceRequirements: [],
+    // Institution Context
+    institutionName: "",
+    institutionType: "",
+    medicalSpecialties: [],
+    currentSystems: [],
+    // Business Details
     budgetRange: "Not specified",
     timeline: "Exploring options",
     contractType: [],
     deploymentPreference: [],
+    // Contact Information
     contactName: user?.firstName || "",
     contactEmail: user?.emailAddresses[0]?.emailAddress || "",
     contactPhone: "",
@@ -132,9 +156,9 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
     status: "draft",
   });
 
-  const [tempFeature, setTempFeature] = useState("");
-  const [tempTechnicalReq, setTempTechnicalReq] = useState("");
   const [tempIntegrationReq, setTempIntegrationReq] = useState("");
+  const [tempMedicalSpecialty, setTempMedicalSpecialty] = useState("");
+  const [tempCurrentSystem, setTempCurrentSystem] = useState("");
 
   useEffect(() => {
     if (user && isOpen) {
@@ -149,9 +173,9 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
   useEffect(() => {
     if (!isOpen) {
       setCurrentStep(1);
-      setTempFeature("");
-      setTempTechnicalReq("");
       setTempIntegrationReq("");
+      setTempMedicalSpecialty("");
+      setTempCurrentSystem("");
     }
   }, [isOpen]);
 
@@ -193,9 +217,9 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
       case 2:
         return true; // Requirements are optional
       case 3:
-        return true; // Business details are optional
+        return true; // Institution context is optional
       case 4:
-        return !!(formData.contactName.trim() && formData.contactEmail.trim());
+        return !!(formData.contactName.trim() && formData.contactEmail.trim()); // Contact info required
       case 5:
         return true; // Review step
       default:
@@ -368,25 +392,92 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
             {currentStep === 2 && (
               <div className="space-y-4">
                 <FormField label="Required Features">
+                  <Textarea
+                    value={formData.requiredFeatures.join("\n")}
+                    onChange={(e) => {
+                      const features = e.target.value.split("\n").filter(f => f.trim());
+                      updateField("requiredFeatures", features);
+                    }}
+                    rows={4}
+                    placeholder="Enter required features, one per line"
+                  />
+                </FormField>
+
+                <FormField label="Preferred Features">
+                  <Textarea
+                    value={formData.preferredFeatures.join("\n")}
+                    onChange={(e) => {
+                      const features = e.target.value.split("\n").filter(f => f.trim());
+                      updateField("preferredFeatures", features);
+                    }}
+                    rows={4}
+                    placeholder="Enter preferred features, one per line"
+                  />
+                </FormField>
+
+                <FormField label="Technical Requirements">
+                  <Textarea
+                    value={formData.technicalRequirements.join("\n")}
+                    onChange={(e) => {
+                      const requirements = e.target.value.split("\n").filter(r => r.trim());
+                      updateField("technicalRequirements", requirements);
+                    }}
+                    rows={4}
+                    placeholder="Enter technical requirements, one per line"
+                  />
+                </FormField>
+
+              </div>
+            )}
+
+            {/* Step 3: Institution Context */}
+            {currentStep === 3 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Institution Name">
+                    <Input
+                      value={formData.institutionName}
+                      onChange={(e) => updateField("institutionName", e.target.value)}
+                      placeholder="Enter institution name"
+                    />
+                  </FormField>
+
+                  <FormField label="Institution Type">
+                    <select
+                      value={formData.institutionType}
+                      onChange={(e) => updateField("institutionType", e.target.value)}
+                      className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select institution type</option>
+                      {INSTITUTION_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                </div>
+
+                <FormField label="Medical Specialties">
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Input
-                        value={tempFeature}
-                        onChange={(e) => setTempFeature(e.target.value)}
-                        placeholder="Add a required feature"
+                        value={tempMedicalSpecialty}
+                        onChange={(e) => setTempMedicalSpecialty(e.target.value)}
+                        placeholder="Add a medical specialty"
                         onKeyPress={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            addArrayItem("requiredFeatures", tempFeature);
-                            setTempFeature("");
+                            addArrayItem("medicalSpecialties", tempMedicalSpecialty);
+                            setTempMedicalSpecialty("");
                           }
                         }}
                       />
                       <button
                         type="button"
                         onClick={() => {
-                          addArrayItem("requiredFeatures", tempFeature);
-                          setTempFeature("");
+                          addArrayItem("medicalSpecialties", tempMedicalSpecialty);
+                          setTempMedicalSpecialty("");
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
@@ -394,15 +485,15 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {formData.requiredFeatures.map((feature, idx) => (
+                      {formData.medicalSpecialties.map((specialty, idx) => (
                         <span
                           key={idx}
                           className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm border border-blue-300 flex items-center gap-2"
                         >
-                          {feature}
+                          {specialty}
                           <button
                             type="button"
-                            onClick={() => removeArrayItem("requiredFeatures", idx)}
+                            onClick={() => removeArrayItem("medicalSpecialties", idx)}
                             className="hover:text-blue-900"
                           >
                             ×
@@ -413,26 +504,26 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
                   </div>
                 </FormField>
 
-                <FormField label="Preferred Features">
+                <FormField label="Current Systems">
                   <div className="space-y-2">
                     <div className="flex gap-2">
                       <Input
-                        value={tempFeature}
-                        onChange={(e) => setTempFeature(e.target.value)}
-                        placeholder="Add a preferred feature"
+                        value={tempCurrentSystem}
+                        onChange={(e) => setTempCurrentSystem(e.target.value)}
+                        placeholder="Add a current system (e.g., Epic, Cerner)"
                         onKeyPress={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            addArrayItem("preferredFeatures", tempFeature);
-                            setTempFeature("");
+                            addArrayItem("currentSystems", tempCurrentSystem);
+                            setTempCurrentSystem("");
                           }
                         }}
                       />
                       <button
                         type="button"
                         onClick={() => {
-                          addArrayItem("preferredFeatures", tempFeature);
-                          setTempFeature("");
+                          addArrayItem("currentSystems", tempCurrentSystem);
+                          setTempCurrentSystem("");
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                       >
@@ -440,61 +531,15 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {formData.preferredFeatures.map((feature, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm border border-green-300 flex items-center gap-2"
-                        >
-                          {feature}
-                          <button
-                            type="button"
-                            onClick={() => removeArrayItem("preferredFeatures", idx)}
-                            className="hover:text-green-900"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </FormField>
-
-                <FormField label="Technical Requirements">
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Input
-                        value={tempTechnicalReq}
-                        onChange={(e) => setTempTechnicalReq(e.target.value)}
-                        placeholder="Add a technical requirement"
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addArrayItem("technicalRequirements", tempTechnicalReq);
-                            setTempTechnicalReq("");
-                          }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          addArrayItem("technicalRequirements", tempTechnicalReq);
-                          setTempTechnicalReq("");
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {formData.technicalRequirements.map((req, idx) => (
+                      {formData.currentSystems.map((system, idx) => (
                         <span
                           key={idx}
                           className="px-3 py-1 bg-zinc-100 text-zinc-700 rounded-full text-sm border border-zinc-300 flex items-center gap-2"
                         >
-                          {req}
+                          {system}
                           <button
                             type="button"
-                            onClick={() => removeArrayItem("technicalRequirements", idx)}
+                            onClick={() => removeArrayItem("currentSystems", idx)}
                             className="hover:text-zinc-900"
                           >
                             ×
@@ -572,116 +617,123 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
               </div>
             )}
 
-            {/* Step 3: Business Details */}
-            {currentStep === 3 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Budget Range">
-                    <select
-                      value={formData.budgetRange}
-                      onChange={(e) => updateField("budgetRange", e.target.value)}
-                      className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {BUDGET_RANGES.map((range) => (
-                        <option key={range} value={range}>
-                          {range}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-
-                  <FormField label="Timeline">
-                    <select
-                      value={formData.timeline}
-                      onChange={(e) => updateField("timeline", e.target.value)}
-                      className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {TIMELINES.map((timeline) => (
-                        <option key={timeline} value={timeline}>
-                          {timeline}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-                </div>
-
-                <FormField label="Contract Type">
-                  <div className="flex flex-wrap gap-2">
-                    {CONTRACT_TYPES.map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => toggleArrayItem("contractType", type)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          formData.contractType.includes(type)
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50"
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </FormField>
-
-                <FormField label="Deployment Preference">
-                  <div className="flex flex-wrap gap-2">
-                    {DEPLOYMENT_OPTIONS.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        onClick={() => toggleArrayItem("deploymentPreference", option)}
-                        className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
-                          formData.deploymentPreference.includes(option)
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50"
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                </FormField>
-              </div>
-            )}
-
-            {/* Step 4: Contact Information */}
+            {/* Step 4: Business Details & Contact Information */}
             {currentStep === 4 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Contact Name" required>
-                    <Input
-                      value={formData.contactName}
-                      onChange={(e) => updateField("contactName", e.target.value)}
-                      required
-                    />
-                  </FormField>
+              <div className="space-y-6">
+                {/* Business Details Section */}
+                <div className="border-b border-zinc-200 pb-6">
+                  <h3 className="text-lg font-semibold text-zinc-900 mb-4">Business Details</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Budget Range">
+                        <select
+                          value={formData.budgetRange}
+                          onChange={(e) => updateField("budgetRange", e.target.value)}
+                          className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {BUDGET_RANGES.map((range) => (
+                            <option key={range} value={range}>
+                              {range}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
 
-                  <FormField label="Contact Title">
-                    <Input
-                      value={formData.contactTitle}
-                      onChange={(e) => updateField("contactTitle", e.target.value)}
-                    />
-                  </FormField>
+                      <FormField label="Timeline">
+                        <select
+                          value={formData.timeline}
+                          onChange={(e) => updateField("timeline", e.target.value)}
+                          className="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {TIMELINES.map((timeline) => (
+                            <option key={timeline} value={timeline}>
+                              {timeline}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+                    </div>
+
+                    <FormField label="Contract Type">
+                      <div className="flex flex-wrap gap-2">
+                        {CONTRACT_TYPES.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => toggleArrayItem("contractType", type)}
+                            className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                              formData.contractType.includes(type)
+                                ? "bg-blue-600 text-white border-blue-600"
+                                : "bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50"
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    </FormField>
+
+                    <FormField label="Deployment Preference">
+                      <div className="flex flex-wrap gap-2">
+                        {DEPLOYMENT_OPTIONS.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => toggleArrayItem("deploymentPreference", option)}
+                            className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                              formData.deploymentPreference.includes(option)
+                                ? "bg-blue-600 text-white border-blue-600"
+                                : "bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-50"
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </FormField>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Contact Email" required>
-                    <Input
-                      type="email"
-                      value={formData.contactEmail}
-                      onChange={(e) => updateField("contactEmail", e.target.value)}
-                      required
-                    />
-                  </FormField>
+                {/* Contact Information Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-zinc-900 mb-4">Contact Information</h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Contact Name" required>
+                        <Input
+                          value={formData.contactName}
+                          onChange={(e) => updateField("contactName", e.target.value)}
+                          required
+                        />
+                      </FormField>
 
-                  <FormField label="Contact Phone">
-                    <Input
-                      type="tel"
-                      value={formData.contactPhone}
-                      onChange={(e) => updateField("contactPhone", e.target.value)}
-                    />
-                  </FormField>
+                      <FormField label="Contact Title">
+                        <Input
+                          value={formData.contactTitle}
+                          onChange={(e) => updateField("contactTitle", e.target.value)}
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Contact Email" required>
+                        <Input
+                          type="email"
+                          value={formData.contactEmail}
+                          onChange={(e) => updateField("contactEmail", e.target.value)}
+                          required
+                        />
+                      </FormField>
+
+                      <FormField label="Contact Phone">
+                        <Input
+                          type="tel"
+                          value={formData.contactPhone}
+                          onChange={(e) => updateField("contactPhone", e.target.value)}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

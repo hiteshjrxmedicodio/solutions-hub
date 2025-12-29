@@ -11,43 +11,45 @@ export function InstitutionContext({ listing }: InstitutionContextProps) {
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4">
-      <h2 className="text-2xl font-bold text-zinc-900 mb-3">Institution Context</h2>
+      <h2 className="text-base font-bold text-zinc-900 mb-3">Institution Context</h2>
       
       {listing.institutionName && (
-        <div className="mb-2">
-          <span className="text-sm font-semibold text-zinc-800">Institution: </span>
-          <span className="text-zinc-700">{listing.institutionName}</span>
+        <div className="mb-3">
+          <span className="text-xs font-semibold text-zinc-800">Institution: </span>
+          <span className="text-xs text-zinc-700">{listing.institutionName}</span>
           {listing.institutionType && (
-            <span className="text-zinc-500"> ({listing.institutionType})</span>
+            <span className="text-xs text-zinc-500"> ({listing.institutionType})</span>
           )}
         </div>
       )}
       
-      {listing.medicalSpecialties && listing.medicalSpecialties.length > 0 && (
-        <div className="mb-2">
-          <h3 className="text-sm font-semibold text-zinc-800 mb-1.5">Medical Specialties</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {listing.medicalSpecialties.map((specialty, idx) => (
-              <span key={idx} className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium border border-zinc-200">
-                {specialty}
-              </span>
-            ))}
+      <div className="flex gap-3">
+        {listing.medicalSpecialties && listing.medicalSpecialties.length > 0 && (
+          <div className="flex-1 bg-zinc-50 rounded-lg border border-zinc-200 p-3">
+            <h3 className="text-sm font-semibold text-zinc-800 mb-2">Medical Specialties</h3>
+            <div className="flex flex-wrap gap-2">
+              {listing.medicalSpecialties.map((specialty, idx) => (
+                <span key={idx} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-200">
+                  {specialty}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      
-      {listing.currentSystems && listing.currentSystems.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-zinc-800 mb-1.5">Current Systems</h3>
-          <div className="flex flex-wrap gap-1.5">
-            {listing.currentSystems.map((system, idx) => (
-              <span key={idx} className="px-2.5 py-1 bg-zinc-100 text-zinc-700 rounded-lg text-sm font-medium border border-zinc-200">
-                {system}
-              </span>
-            ))}
+        )}
+        
+        {listing.currentSystems && listing.currentSystems.length > 0 && (
+          <div className="flex-1 bg-zinc-50 rounded-lg border border-zinc-200 p-3">
+            <h3 className="text-sm font-semibold text-zinc-800 mb-2">Current Systems</h3>
+            <div className="flex flex-wrap gap-2">
+              {listing.currentSystems.map((system, idx) => (
+                <span key={idx} className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-200">
+                  {system}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

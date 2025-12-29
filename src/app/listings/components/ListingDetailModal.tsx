@@ -109,48 +109,42 @@ export function ListingDetailModal({ isOpen, onClose, listingId }: ListingDetail
             </div>
           </div>
 
-          {/* Main Content: Two-Column Layout - Centered */}
+          {/* Main Content: Single Column Layout - Centered */}
           <div className="flex justify-center">
-            <div className="flex" style={{ width: '90%' }}>
-              {/* Left Column - Requirements & Context (57% - increased by 5%) */}
-              <div className="flex-[0.57] space-y-3 pr-3">
+            <div style={{ width: '90%' }}>
+              <div className="space-y-3">
                 <RequirementsSection listing={listing} />
                 <InstitutionContext listing={listing} />
-                <div>
-                  <AdditionalNotes listing={listing} />
-                  <div className="pb-5"></div>
-                </div>
-                {isOwner && <ProposalsList listing={listing} onClose={onClose} />}
-              </div>
-
-              {/* Right Column - Contact & Business Details (side by side) & Submit Proposal (below) - Adjusted to 43% */}
-              <div className="flex-[0.43] flex-shrink-0">
-                <div className="flex flex-col gap-3">
-                  {/* Contact and Business Details - Side by Side */}
-                  <div className="flex gap-3">
-                    <div className="flex-1">
-                      <ContactSection listing={listing} />
-                    </div>
-                    <div className="flex-1">
-                      <BusinessDetails listing={listing} />
-                    </div>
+                <AdditionalNotes listing={listing} />
+                
+                {/* Contact and Business Details - Side by Side */}
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <ContactSection listing={listing} />
                   </div>
-                  {/* Submit Proposal Section - Below Contact & Business Details (Vendors only) */}
-                  {user && !isOwner && listing.status === "active" && (
-                    <div>
-                      {showProposalForm ? (
-                        <ProposalForm
-                          onSubmit={handleSubmitProposal}
-                          onCancel={() => setShowProposalForm(false)}
-                        />
-                      ) : (
-                        <div className="flex justify-center">
-                          <SubmitProposalButton onClick={() => setShowProposalForm(true)} />
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <BusinessDetails listing={listing} />
+                  </div>
                 </div>
+                
+                {/* Submit Proposal Section (Vendors only) */}
+                {user && !isOwner && listing.status === "active" && (
+                  <div className="pb-6">
+                    {showProposalForm ? (
+                      <ProposalForm
+                        onSubmit={handleSubmitProposal}
+                        onCancel={() => setShowProposalForm(false)}
+                      />
+                    ) : (
+                      <div className="flex justify-center">
+                        <SubmitProposalButton onClick={() => setShowProposalForm(true)} />
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Proposals List (Owner only) */}
+                {isOwner && <ProposalsList listing={listing} onClose={onClose} />}
               </div>
             </div>
           </div>

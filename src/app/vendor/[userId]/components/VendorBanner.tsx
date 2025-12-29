@@ -71,9 +71,9 @@ export function VendorBanner({
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-zinc-900 mb-3">{companyName}</h1>
                     {(solutionDescription || productDescription || missionStatement) && (
-                      <p className="text-sm text-zinc-700">
-                        {solutionDescription || productDescription || missionStatement}
-                      </p>
+                        <p className="text-sm text-zinc-700">
+                          {solutionDescription || productDescription || missionStatement}
+                        </p>
                     )}
                   </div>
                 </div>

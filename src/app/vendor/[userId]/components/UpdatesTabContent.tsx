@@ -284,24 +284,24 @@ export function UpdatesTabContent({
           </div>
 
           {updates && updates.length > 0 ? (
-            <div className="space-y-8">
-              {groupedUpdates && Object.entries(groupedUpdates)
-                .sort(([a], [b]) => {
-                  const order = ['release', 'feature', 'announcement', 'roadmap'];
-                  return order.indexOf(a) - order.indexOf(b);
-                })
-                .map(([type, typeUpdates]) => (
+        <div className="space-y-8">
+          {groupedUpdates && Object.entries(groupedUpdates)
+            .sort(([a], [b]) => {
+              const order = ['release', 'feature', 'announcement', 'roadmap'];
+              return order.indexOf(a) - order.indexOf(b);
+            })
+            .map(([type, typeUpdates]) => (
                   <div key={type}>
                     <div className="flex items-center gap-3 mb-4">
                       <h3 className="text-lg font-semibold text-zinc-900">
-                        {type === 'release' ? 'Recent Releases' : 
-                         type === 'feature' ? 'New Features' :
-                         type === 'announcement' ? 'Announcements' : 'Roadmap Updates'}
+                    {type === 'release' ? 'Recent Releases' : 
+                     type === 'feature' ? 'New Features' :
+                     type === 'announcement' ? 'Announcements' : 'Roadmap Updates'}
                       </h3>
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getTypeBadgeColor(type)}`}>
-                        {getTypeLabel(type)}
-                      </span>
-                    </div>
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getTypeBadgeColor(type)}`}>
+                    {getTypeLabel(type)}
+                  </span>
+                </div>
                 <div className="space-y-4">
                   {typeUpdates
                     .sort((a, b) => {
@@ -384,14 +384,14 @@ export function UpdatesTabContent({
                         <p className="text-zinc-700 whitespace-pre-line leading-relaxed">{update.content}</p>
                       </div>
                     ))}
-                  </div>
-                  </div>
-                ))}
-            </div>
+                </div>
+              </div>
+            ))}
+        </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-zinc-500 text-sm italic">No updates available yet.</p>
-            </div>
+          <div className="text-center py-12">
+            <p className="text-zinc-500 text-sm italic">No updates available yet.</p>
+          </div>
           )}
         </div>
       )}

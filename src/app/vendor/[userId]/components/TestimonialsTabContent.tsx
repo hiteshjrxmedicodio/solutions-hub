@@ -416,8 +416,8 @@ export function TestimonialsTabContent({
         <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-8 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-zinc-900">
-              Customer Testimonials & Reviews
-            </h2>
+            Customer Testimonials & Reviews
+          </h2>
             {isVendorOwner && (
               <div className="flex items-center gap-2">
                 <button

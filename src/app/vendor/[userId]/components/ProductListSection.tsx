@@ -80,48 +80,48 @@ export function ProductListSection({
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <h3 className="text-base font-semibold text-zinc-900">{product.name}</h3>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {product.category && product.category.length > 0 && (
+              {product.category && product.category.length > 0 && (
                       <>
-                        {product.category.map((cat, catIdx) => (
+                  {product.category.map((cat, catIdx) => (
                           <span key={catIdx} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
-                            {cat}
-                          </span>
-                        ))}
+                        {cat}
+                      </span>
+                  ))}
                       </>
-                    )}
-                    {/* If product doesn't have category but vendor has solutionCategory, show those */}
-                    {(!product.category || product.category.length === 0) && solutionCategory && solutionCategory.length > 0 && (
+              )}
+              {/* If product doesn't have category but vendor has solutionCategory, show those */}
+              {(!product.category || product.category.length === 0) && solutionCategory && solutionCategory.length > 0 && (
                       <>
-                        {solutionCategory.map((cat, catIdx) => (
-                          <span key={catIdx} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
-                            {cat}
-                          </span>
-                        ))}
+                  {solutionCategory.map((cat, catIdx) => (
+                    <span key={catIdx} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
+                      {cat}
+                    </span>
+                  ))}
                       </>
                     )}
                   </div>
                 </div>
                 {hasButtons && (
                   <div className="flex gap-2 mt-2">
-                    {product.demoLink && (
-                      <a 
-                        href={product.demoLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
-                      >
-                        Demo
-                      </a>
-                    )}
-                    {product.trialLink && (
-                      <a 
-                        href={product.trialLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-xs font-medium"
-                      >
-                        Trial
-                      </a>
+                {product.demoLink && (
+                    <a 
+                      href={product.demoLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
+                    >
+                      Demo
+                    </a>
+                )}
+                {product.trialLink && (
+                    <a 
+                      href={product.trialLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-xs font-medium"
+                    >
+                      Trial
+                    </a>
                     )}
                   </div>
                 )}
@@ -136,43 +136,43 @@ export function ProductListSection({
               <div className={`bg-zinc-50 rounded-lg border border-zinc-200 ${hasButtons ? 'p-3' : 'px-3 py-2'}`}>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <h3 className="text-base font-semibold text-zinc-900">
-                    {solutionName || companyName || "Product"}
-                  </h3>
-                  {solutionCategory && solutionCategory.length > 0 && (
+              {solutionName || companyName || "Product"}
+            </h3>
+            {solutionCategory && solutionCategory.length > 0 && (
                     <div className="flex items-center gap-2 flex-wrap">
-                      {solutionCategory.map((cat, catIdx) => (
+                {solutionCategory.map((cat, catIdx) => (
                         <span key={catIdx} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                      {cat}
+                    </span>
+                ))}
+              </div>
+            )}
                 </div>
                 {hasButtons && (
                   <div className="flex gap-2 mt-2">
-                    {demoLink && (
-                      <a 
-                        href={demoLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
-                      >
-                        Demo
-                      </a>
-                    )}
-                    {trialLink && (
-                      <a 
-                        href={trialLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-xs font-medium"
-                      >
-                        Trial
-                      </a>
-                    )}
-                  </div>
+              {demoLink && (
+                  <a 
+                    href={demoLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
+                  >
+                    Demo
+                  </a>
+              )}
+              {trialLink && (
+                  <a 
+                    href={trialLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-xs font-medium"
+                  >
+                    Trial
+                  </a>
+              )}
+            </div>
                 )}
-              </div>
+          </div>
             );
           })()
         )}
