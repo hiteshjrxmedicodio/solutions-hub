@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const priority = searchParams.get('priority');
     const userId = searchParams.get('userId'); // Filter by user's listings
+    const vendorUserId = searchParams.get('vendorUserId'); // Filter by vendor's proposals
     
     const query: any = {};
     
@@ -21,6 +22,13 @@ export async function GET(request: NextRequest) {
     if (userId) {
       query.userId = userId;
       // If userId is provided, don't filter by status unless explicitly requested
+      if (status && status !== 'all') {
+        query.status = status.toLowerCase();
+      }
+    } else if (vendorUserId) {
+      // Filter listings where vendor has submitted proposals
+      query['proposals.vendorUserId'] = vendorUserId;
+      // Also apply status filter if provided
       if (status && status !== 'all') {
         query.status = status.toLowerCase();
       }

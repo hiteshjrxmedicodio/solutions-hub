@@ -33,10 +33,11 @@ function ListingsContent() {
   const searchParams = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cardsLoading, setCardsLoading] = useState(false); // Separate loading state for cards only
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'my' | 'active'>('all');
+  const [filter, setFilter] = useState<'all' | 'my' | 'active' | 'draft'>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
@@ -113,17 +114,37 @@ function ListingsContent() {
     }
   }, [searchParams, isLoaded, isLoadingUserData]);
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (showCardsLoading = false) => {
       try {
-        setLoading(true);
+        if (showCardsLoading) {
+          setCardsLoading(true);
+        } else {
+          setLoading(true);
+        }
         let endpoint = '/api/listings';
         
-        if (filter === 'my' && user?.id) {
-          endpoint = `/api/listings?userId=${user.id}`;
-        } else if (filter === 'active') {
-          endpoint = '/api/listings?status=active';
-        } else if (filter === 'all') {
-          endpoint = '/api/listings';
+        // Different filter logic for vendors vs customers
+        if (effectiveRole === 'vendor' || (isSuperAdmin && actingAs === 'vendor')) {
+          // Vendor filters
+          if (filter === 'active') {
+            endpoint = '/api/listings?status=active';
+          } else if (filter === 'my' && user?.id) {
+            // Listings where vendor has submitted proposals
+            endpoint = `/api/listings?vendorUserId=${user.id}`;
+          } else {
+            endpoint = '/api/listings';
+          }
+        } else {
+          // Customer filters
+          if (filter === 'my' && user?.id) {
+            endpoint = `/api/listings?userId=${user.id}`;
+          } else if (filter === 'active') {
+            endpoint = '/api/listings?status=active';
+          } else if (filter === 'draft') {
+            endpoint = '/api/listings?status=draft';
+          } else if (filter === 'all') {
+            endpoint = '/api/listings';
+          }
         }
         
         const response = await fetch(endpoint);
@@ -146,27 +167,45 @@ function ListingsContent() {
         console.error("Error fetching listings:", err);
         setError(err instanceof Error ? err.message : "Failed to load listings");
       } finally {
-        setLoading(false);
+        if (showCardsLoading) {
+          setCardsLoading(false);
+        } else {
+          setLoading(false);
+        }
       }
-  }, [filter, user?.id]);
+  }, [filter, user?.id, effectiveRole, isSuperAdmin, actingAs]);
 
+  // Track if initial load is done
+  const initialLoadDone = useRef(false);
+
+  // Initial load - full page loading
   useEffect(() => {
-    if (isLoaded && !isLoadingUserData) {
+    if (isLoaded && !isLoadingUserData && !initialLoadDone.current) {
       // Skip automatic refetch if we're manually adding a listing
       if (isManuallyAddingListing.current) {
         isManuallyAddingListing.current = false;
         return;
       }
-      fetchListings();
+      initialLoadDone.current = true;
+      fetchListings(false); // Full page load
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, isLoadingUserData, filter, user?.id]);
+  }, [isLoaded, isLoadingUserData, user?.id]);
+
+  // Filter change - only refresh cards section
+  useEffect(() => {
+    if (isLoaded && !isLoadingUserData && initialLoadDone.current) {
+      // Only show cards loading if initial load is done
+      fetchListings(true); // Cards only loading
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
 
   // Refetch listings when page becomes visible (user navigates back)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && isLoaded && !isLoadingUserData) {
-        fetchListings();
+        fetchListings(true); // Cards only loading
       }
     };
 
@@ -306,7 +345,7 @@ function ListingsContent() {
           {/* Main Content with Filters on Right */}
           <div className="flex gap-6">
             {/* Listings Grid - Left Side */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
               {/* Search Bar - Above all listings, matching first listing card width */}
               <div className="mb-6">
                 <div className="relative w-full lg:w-[calc((100%-3rem)/3)]">
@@ -328,7 +367,15 @@ function ListingsContent() {
                 </div>
               </div>
 
-              {filteredListings.length === 0 ? (
+              {cardsLoading && (
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-2xl">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-300 border-t-zinc-900 mx-auto mb-2"></div>
+                    <p className="text-sm text-zinc-600">Loading listings...</p>
+                  </div>
+                </div>
+              )}
+              {filteredListings.length === 0 && !cardsLoading ? (
                 <div className="text-center py-20 bg-gradient-to-br from-zinc-50 to-white rounded-2xl border border-zinc-200">
                   <div className="w-20 h-20 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg
@@ -346,7 +393,7 @@ function ListingsContent() {
                       ? 'Try adjusting your filters to see more results'
                       : 'Be the first to create a project request and connect with vendors'}
                   </p>
-                  {user && !searchQuery && (
+                  {user && !searchQuery && effectiveRole !== 'vendor' && (
                     <button
                       onClick={() => setIsCreateModalOpen(true)}
                       className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-xl transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-105 active:scale-100"
@@ -356,7 +403,7 @@ function ListingsContent() {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
                   {filteredListings.map((listing) => (
                     <ListingCard
                       key={listing._id}
@@ -424,43 +471,94 @@ function ListingsContent() {
                 <h2 className="text-xl font-bold text-zinc-900 mb-6">Filters</h2>
                 
                 <div className="space-y-6">
-                  {/* Status Filter Tabs */}
+                  {/* Status Filter Tabs - Different for vendors vs customers */}
                   <div>
                     <label className="block text-sm font-semibold text-zinc-900 mb-3">
                       Status
                     </label>
                     <div className="flex flex-col gap-2">
-                      <button
-                        onClick={() => setFilter('all')}
-                        className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                          filter === 'all'
-                            ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                            : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        All
-                      </button>
-                      <button
-                        onClick={() => setFilter('active')}
-                        className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                          filter === 'active'
-                            ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                            : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        Active Only
-                      </button>
-                      {user && (
-                        <button
-                          onClick={() => setFilter('my')}
-                          className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                            filter === 'my'
-                              ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                              : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                          }`}
-                        >
-                          My Requests
-                        </button>
+                      {(effectiveRole === 'vendor' || (isSuperAdmin && actingAs === 'vendor')) ? (
+                        // Vendor filters
+                        <>
+                          <button
+                            onClick={() => setFilter('all')}
+                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                              filter === 'all'
+                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            All Listings
+                          </button>
+                          <button
+                            onClick={() => setFilter('active')}
+                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                              filter === 'active'
+                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            Active Only
+                          </button>
+                          {user && (
+                            <button
+                              onClick={() => setFilter('my')}
+                              className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                                filter === 'my'
+                                  ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                  : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                              }`}
+                            >
+                              With My Proposals
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        // Customer filters
+                        <>
+                          <button
+                            onClick={() => setFilter('all')}
+                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                              filter === 'all'
+                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            All
+                          </button>
+                          <button
+                            onClick={() => setFilter('active')}
+                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                              filter === 'active'
+                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            Active Only
+                          </button>
+                          <button
+                            onClick={() => setFilter('draft')}
+                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                              filter === 'draft'
+                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                            }`}
+                          >
+                            Draft
+                          </button>
+                          {user && (
+                            <button
+                              onClick={() => setFilter('my')}
+                              className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                                filter === 'my'
+                                  ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                                  : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                              }`}
+                            >
+                              My Requests
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
