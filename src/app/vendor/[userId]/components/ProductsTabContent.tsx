@@ -4,7 +4,6 @@ interface Product {
   name: string;
   description: string;
   category?: string[];
-  pricing?: string;
   features?: string[];
   demoLink?: string;
   trialLink?: string;
@@ -57,11 +56,6 @@ export function ProductsTabContent({
                   ))}
                 </ul>
               </div>
-            )}
-            {product.pricing && (
-              <p className="text-sm text-zinc-600 mb-4">
-                <span className="font-semibold">Pricing: </span>{product.pricing}
-              </p>
             )}
             <div className="flex gap-3">
               {product.demoLink && (

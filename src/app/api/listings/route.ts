@@ -17,13 +17,19 @@ export async function GET(request: NextRequest) {
     
     const query: any = {};
     
-    // Only show active listings by default (unless filtering by user's own listings)
+    // Filter by status or show all
     if (userId) {
       query.userId = userId;
-    } else if (!status) {
-      query.status = 'active';
+      // If userId is provided, don't filter by status unless explicitly requested
+      if (status && status !== 'all') {
+        query.status = status.toLowerCase();
+      }
+    } else if (status === 'all' || !status) {
+      // Show all listings regardless of status
+      // Don't add status filter
     } else {
-      query.status = status;
+      // Filter by the specified status (case-insensitive)
+      query.status = status.toLowerCase();
     }
     
     if (category) {

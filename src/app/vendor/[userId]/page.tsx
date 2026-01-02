@@ -122,7 +122,6 @@ interface VendorData {
     name: string;
     description: string;
     category?: string[];
-    pricing?: string;
     features?: string[];
     demoLink?: string;
     trialLink?: string;
@@ -167,38 +166,54 @@ export default function VendorDetailPage() {
 
   const userEmail = user?.emailAddresses[0]?.emailAddress || "";
   const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL;
-  // Special case: seed-medicodio is linked to hitesh.ms24@gmail.com
-  const isSeedMedicodio = userId === "seed-medicodio";
-  const isVendorOwner = user?.id === userId || (isSeedMedicodio && isSuperAdmin);
+  // Special case: medicodio and seed-medicodio are linked to hitesh.ms24@gmail.com
+  const isMedicodio = userId === "medicodio" || userId === "seed-medicodio";
+  const isVendorOwner = user?.id === userId || (isMedicodio && isSuperAdmin);
 
   useEffect(() => {
     async function fetchVendor() {
       try {
-        // Special case: seed-medicodio uses a special endpoint
+        setLoading(true);
+        setError(null);
+        
+        // Special case: medicodio and seed-medicodio use a special endpoint
         let endpoint;
-        if (isSeedMedicodio && isSuperAdmin) {
-          endpoint = `/api/vendor/special/seed-medicodio`;
-        } else if (isVendorOwner) {
-        // If vendor is viewing their own page, use private endpoint (allows unapproved profiles)
+        if (isMedicodio && isSuperAdmin) {
+          endpoint = `/api/vendor/special/medicodio`;
+        } else if (isVendorOwner || isSuperAdmin) {
+          // If vendor is viewing their own page OR superadmin, use private endpoint (allows unapproved profiles)
           endpoint = `/api/vendor/${userId}`;
         } else {
-        // Otherwise, use public endpoint (only approved profiles)
+          // Otherwise, use public endpoint (only approved profiles)
           endpoint = `/api/vendor/public/${userId}`;
         }
         
         const response = await fetch(endpoint);
-        if (!response.ok) {
-          throw new Error("Failed to fetch vendor");
-        }
         const data = await response.json();
+        
+        if (!response.ok || !data.success) {
+          // Handle 404 more gracefully
+          if (response.status === 404) {
+            setError("Vendor profile not found. The vendor may not have completed their profile yet.");
+          } else if (response.status === 401) {
+            setError("You don't have permission to view this vendor profile.");
+          } else {
+            setError(data.error || "Failed to load vendor profile");
+          }
+          setVendor(null);
+          return;
+        }
+        
         if (data.success && data.data) {
           setVendor(data.data);
         } else {
-          throw new Error(data.error || "Vendor not found");
+          setError(data.error || "Vendor profile not found");
+          setVendor(null);
         }
       } catch (err) {
         console.error("Error fetching vendor:", err);
-        setError(err instanceof Error ? err.message : "Failed to load vendor");
+        setError(err instanceof Error ? err.message : "Failed to load vendor profile");
+        setVendor(null);
       } finally {
         setLoading(false);
       }
@@ -207,7 +222,7 @@ export default function VendorDetailPage() {
     if (userId && userLoaded) {
       fetchVendor();
     }
-  }, [userId, userLoaded, isVendorOwner, isSeedMedicodio, isSuperAdmin]);
+  }, [userId, userLoaded, isVendorOwner, isMedicodio, isSuperAdmin]);
 
   const handleUpdate = async (section: string, data: any) => {
     if (!vendor || !isSuperAdmin) return;
@@ -232,8 +247,8 @@ export default function VendorDetailPage() {
       if (result.success) {
         // Refresh vendor data
         let refreshResponse;
-        if (isSeedMedicodio && isSuperAdmin) {
-          refreshResponse = await fetch(`/api/vendor/special/seed-medicodio`);
+        if (isMedicodio && isSuperAdmin) {
+          refreshResponse = await fetch(`/api/vendor/special/medicodio`);
         } else {
           refreshResponse = await fetch(`/api/vendor/public/${userId}`);
         }
@@ -288,8 +303,8 @@ export default function VendorDetailPage() {
       if (result.success) {
         // Refresh vendor data
         let refreshResponse;
-        if (isSeedMedicodio && isSuperAdmin) {
-          refreshResponse = await fetch(`/api/vendor/special/seed-medicodio`);
+        if (isMedicodio && isSuperAdmin) {
+          refreshResponse = await fetch(`/api/vendor/special/medicodio`);
         } else if (isVendorOwner) {
           refreshResponse = await fetch(`/api/vendor/${userId}`);
         } else {
@@ -349,8 +364,8 @@ export default function VendorDetailPage() {
       if (result.success) {
         // Refresh vendor data
         let refreshResponse;
-        if (isSeedMedicodio && isSuperAdmin) {
-          refreshResponse = await fetch(`/api/vendor/special/seed-medicodio`);
+        if (isMedicodio && isSuperAdmin) {
+          refreshResponse = await fetch(`/api/vendor/special/medicodio`);
         } else if (isVendorOwner) {
           refreshResponse = await fetch(`/api/vendor/${userId}`);
         } else {
@@ -544,12 +559,12 @@ export default function VendorDetailPage() {
                     testimonials={vendor.customerTestimonials}
                     vendorUserId={vendor.userId}
                     companyName={vendor.companyName}
-                    isVendorOwner={user?.id === vendor.userId || (isSeedMedicodio && isSuperAdmin)}
+                    isVendorOwner={user?.id === vendor.userId || (isMedicodio && isSuperAdmin)}
                     enabledSubSections={enabledSubSections}
                     onRefresh={async () => {
                       let refreshResponse;
-                      if (isSeedMedicodio && isSuperAdmin) {
-                        refreshResponse = await fetch(`/api/vendor/special/seed-medicodio`);
+                      if (isMedicodio && isSuperAdmin) {
+                        refreshResponse = await fetch(`/api/vendor/special/medicodio`);
                       } else {
                         refreshResponse = await fetch(`/api/vendor/public/${userId}`);
                       }

@@ -10,7 +10,9 @@ export async function GET(
     const { userId } = await params;
     
     await connectDB();
-    const vendor = await Vendor.findOne({ userId, status: 'approved' });
+    // Special case: medicodio maps to seed-medicodio in the database
+    const actualUserId = userId === "medicodio" ? "seed-medicodio" : userId;
+    const vendor = await Vendor.findOne({ userId: actualUserId, status: 'approved' });
 
     if (!vendor) {
       return NextResponse.json({

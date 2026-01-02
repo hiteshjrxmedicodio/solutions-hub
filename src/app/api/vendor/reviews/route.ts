@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user is a customer (buyer)
+    // Verify user is a customer
     const institution = await HealthcareInstitution.findOne({ userId });
 
     if (!institution) {

@@ -11,10 +11,10 @@ export function InfoCard({ isSuperAdmin, viewMode, userRole }: InfoCardProps) {
     if (isSuperAdmin && viewMode === "vendor") {
       return "View vendor analytics, track proposals, and monitor market interest in your solution categories.";
     }
-    if (userRole === "buyer" || (isSuperAdmin && viewMode === "customer")) {
+    if (userRole === "customer" || (isSuperAdmin && viewMode === "customer")) {
       return "Manage your project listings, view proposals, and track your projects from here.";
     }
-    if (userRole === "seller") {
+    if (userRole === "vendor") {
       return "Manage your vendor profile, browse listings, and track your proposals from here.";
     }
     return "Get started by completing your profile setup.";

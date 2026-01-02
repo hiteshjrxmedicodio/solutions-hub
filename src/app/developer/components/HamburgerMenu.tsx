@@ -229,13 +229,22 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
     }
   };
 
-  const handleProfileClick = () => {
-    // Special case: Link hitesh.ms24@gmail.com to seed-medicodio vendor page
-    if (userEmail === "hitesh.ms24@gmail.com") {
+  const handleProfileClick = (profileType?: "vendor" | "customer") => {
+    // For super admin, allow choosing between vendor and customer profiles
+    if (isSuperAdmin && user?.id) {
+      if (profileType === "customer") {
+        router.push(`/customer/${user.id}`);
+      } else {
+        // Default to vendor profile for super admin
+        router.push("/vendor/seed-medicodio");
+      }
+    } else if (userEmail === "hitesh.ms24@gmail.com") {
       router.push("/vendor/seed-medicodio");
-    } else if (userRole === "seller" && user?.id) {
+    } else if (userRole === "vendor" && user?.id) {
       router.push(`/vendor/${user.id}`);
-    } else if (userRole === "buyer") {
+    } else if (userRole === "customer" && user?.id) {
+      router.push(`/customer/${user.id}`);
+    } else if (userRole === "customer") {
       router.push("/solutions-hub");
     }
     if (isClosable) {
@@ -245,7 +254,7 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
   };
 
   // Check if user is super admin (by email or role)
-  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superAdmin";
+  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superadmin";
 
   return (
     <>
@@ -307,8 +316,8 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
 
           {/* Navigation Links */}
           <div className="flex items-center gap-6 px-4">
-            {/* Solutions Hub - Only visible to buyers */}
-            {userRole !== "seller" && (
+            {/* Solutions Hub - Only visible to customers */}
+            {userRole !== "vendor" && (
               <a
                 href="/solutions-hub"
                 className="text-zinc-900 hover:text-zinc-700 transition-colors font-medium text-sm"
@@ -317,8 +326,8 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
                 Solutions Hub
               </a>
             )}
-            {/* Listings - Only visible to buyers */}
-            {userRole !== "seller" && (
+            {/* Listings - Only visible to customers */}
+            {userRole !== "vendor" && (
               <a
                 href="/listings"
                 className="text-zinc-900 hover:text-zinc-700 transition-colors font-medium text-sm"
@@ -327,13 +336,6 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
                 Listings
               </a>
             )}
-            <a
-              href="/blogs"
-              className="text-zinc-900 hover:text-zinc-700 transition-colors font-medium text-sm"
-              onClick={isClosable ? onClose : undefined}
-            >
-              Blogs
-            </a>
             {/* Developer Mode - Only visible to super admin */}
             {isSuperAdmin && (
               <a
@@ -409,8 +411,52 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
             right: `${dropdownPosition.right}px`,
           }}
         >
+          {/* Super Admin: Show both vendor and customer profile options */}
+          {isSuperAdmin && user?.id ? (
+            <>
+              <button
+                onClick={() => handleProfileClick("vendor")}
+                className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center gap-3"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Vendor Profile</span>
+              </button>
+              <button
+                onClick={() => handleProfileClick("customer")}
+                className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center gap-3"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Customer Profile</span>
+              </button>
+            </>
+          ) : (
           <button
-            onClick={handleProfileClick}
+              onClick={() => handleProfileClick()}
             className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-zinc-50 transition-colors flex items-center gap-3"
           >
             <svg
@@ -428,6 +474,7 @@ export function HamburgerMenu({ isOpen, onToggle, onClose, isClosable = true, sh
             </svg>
             <span>Profile</span>
           </button>
+          )}
           <div className="border-t border-zinc-200 my-1" />
           <button
             onClick={handleSignOut}

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { useUserData } from "@/contexts/UserContext";
+import { SettingsModal } from "@/components/SettingsModal";
 import Link from "next/link";
 
 interface SidebarProps {
@@ -16,7 +17,9 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onCollapseToggle }: SidebarProps) {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const onToggleRef = useRef(onToggle);
@@ -25,8 +28,10 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
   const pathname = usePathname();
   const { signOut } = useClerk();
   const { user, isLoaded: isUserLoaded } = useUser();
-  const { userData } = useUserData();
+  const { userData, actingAs } = useUserData();
   const userRole = userData?.role;
+  // Use actingAs role if set, otherwise use actual role
+  const effectiveRole = actingAs || userRole;
 
   // Keep refs updated
   useEffect(() => {
@@ -38,6 +43,59 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!user?.id) {
+      setUnreadNotificationCount(0);
+      return;
+    }
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await fetch("/api/notifications?filter=unread");
+        
+        if (!response.ok) {
+          // If response is not OK, don't throw but log and set count to 0
+          console.warn(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
+          setUnreadNotificationCount(0);
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          setUnreadNotificationCount(data.notifications?.length || 0);
+        } else {
+          setUnreadNotificationCount(0);
+        }
+      } catch (error) {
+        // Silently handle network errors - don't spam console
+        // Only log if it's not a network error
+        if (error instanceof TypeError && error.message === "Failed to fetch") {
+          // Network error - likely server not running or CORS issue
+          setUnreadNotificationCount(0);
+        } else {
+          console.error("Error fetching unread notification count:", error);
+          setUnreadNotificationCount(0);
+        }
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+    
+    // Poll every 30 seconds for new notifications
+    const interval = setInterval(fetchUnreadCount, 30000);
+    
+    // Also refresh when window regains focus
+    const handleFocus = () => fetchUnreadCount();
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user?.id]);
 
   // Cache user display info in localStorage
   const USER_DISPLAY_CACHE_KEY = "user_display_cache";
@@ -191,13 +249,22 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
     }
   };
 
-  const handleProfileClick = () => {
-    // Special case: Link hitesh.ms24@gmail.com to seed-medicodio vendor page
-    if (userEmail === "hitesh.ms24@gmail.com") {
+  const handleProfileClick = (profileType?: "vendor" | "customer") => {
+    // For super admin, allow choosing between vendor and customer profiles
+    if (isSuperAdmin && user?.id) {
+      if (profileType === "customer") {
+        router.push(`/customer/${user.id}`);
+      } else {
+        // Default to vendor profile for super admin
+        router.push("/vendor/seed-medicodio");
+      }
+    } else if (userEmail === "hitesh.ms24@gmail.com") {
       router.push("/vendor/seed-medicodio");
-    } else if (userRole === "seller" && user?.id) {
+    } else if (userRole === "vendor" && user?.id) {
       router.push(`/vendor/${user.id}`);
-    } else if (userRole === "buyer") {
+    } else if (userRole === "customer" && user?.id) {
+      router.push(`/customer/${user.id}`);
+    } else if (userRole === "customer") {
       router.push("/solutions-hub");
     }
     onClose();
@@ -205,21 +272,34 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
   };
 
   // Check if user is super admin
-  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superAdmin";
+  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superadmin";
 
-  const navLinks = [
+  const navLinks: Array<{
+    name: string;
+    href: string;
+    icon: React.ReactNode;
+    visible: boolean;
+    hasNotification?: boolean;
+    onClick?: (e: React.MouseEvent) => void;
+  }> = [
     {
       name: "Dashboard",
       href: "/dashboard",
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 flex-shrink-0">
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
-        </svg>
+        <div className="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 flex-shrink-0">
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          {unreadNotificationCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></span>
+          )}
+        </div>
       ),
       visible: true,
+      hasNotification: unreadNotificationCount > 0,
     },
     {
       name: "Solutions Hub",
@@ -231,7 +311,7 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
           <line x1="12" y1="22.08" x2="12" y2="12" />
         </svg>
       ),
-      visible: userRole !== "seller",
+      visible: true,
     },
     {
       name: "Listings",
@@ -245,18 +325,17 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
           <polyline points="10 9 9 9 8 9" />
         </svg>
       ),
-      visible: userRole !== "seller",
+      visible: effectiveRole !== "vendor" || isSuperAdmin,
     },
     {
-      name: "Blogs",
-      href: "/blogs",
+      name: "Proposals",
+      href: "/proposals",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 flex-shrink-0">
-          <path d="M4 19.5A2.5 2.5 0 0 0 6.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+          <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      visible: true,
+      visible: effectiveRole === "customer" || isSuperAdmin,
     },
     {
       name: "Developer Mode",
@@ -331,12 +410,16 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
               .filter((link) => link.visible)
               .map((link) => {
                 const isActive = pathname === link.href || pathname?.startsWith(link.href + "/");
+                const Component = link.onClick ? 'button' : Link;
+                const linkProps = link.onClick 
+                  ? { onClick: (e: React.MouseEvent) => { e.preventDefault(); link.onClick!(e); onClose(); } }
+                  : { href: link.href, onClick: onClose };
+                
                 return (
                   <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      onClick={onClose}
-                      className={`flex items-center ${isCollapsed ? "justify-center px-2" : "gap-3 px-4"} py-3 rounded-lg transition-colors ${
+                    <Component
+                      {...linkProps}
+                      className={`w-full flex items-center ${isCollapsed ? "justify-center px-2" : "gap-3 px-4"} py-3 rounded-lg transition-colors relative ${
                         isActive
                           ? "bg-gradient-to-r from-blue-50 to-teal-50 text-zinc-900 font-medium"
                           : "text-zinc-600 hover:bg-gradient-to-r hover:from-blue-50 hover:via-teal-50 hover:to-emerald-50 hover:text-zinc-900"
@@ -346,8 +429,10 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
                       <div className={isCollapsed ? "flex items-center justify-center" : ""}>
                         {link.icon}
                       </div>
-                      {!isCollapsed && <span>{link.name}</span>}
-                    </Link>
+                      {!isCollapsed && (
+                        <span className="flex-1">{link.name}</span>
+                      )}
+                    </Component>
                   </li>
                 );
               })}
@@ -387,8 +472,101 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
                     ref={dropdownRef}
                     className={`absolute ${isCollapsed ? "left-16" : "left-0"} bottom-12 bg-white rounded-lg shadow-xl border border-zinc-300 py-2 z-[100] w-48`}
                   >
+                    {/* Super Admin: Show profile based on acting role */}
+                    {isSuperAdmin && user?.id ? (
+                      <>
+                        {/* Show single Profile button if acting as a role */}
+                        {actingAs === "vendor" ? (
+                          <button
+                            onClick={() => handleProfileClick("vendor")}
+                            className="w-full px-4 py-2.5 text-left text-sm bg-gradient-to-r from-blue-50 to-teal-50 text-zinc-900 font-medium transition-colors flex items-center gap-3"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-4 w-4"
+                            >
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                              <circle cx="9" cy="7" r="4" />
+                              <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <span>Profile</span>
+                            <span className="ml-auto text-xs text-blue-600 font-medium">Active</span>
+                          </button>
+                        ) : actingAs === "customer" ? (
+                          <button
+                            onClick={() => handleProfileClick("customer")}
+                            className="w-full px-4 py-2.5 text-left text-sm bg-gradient-to-r from-blue-50 to-teal-50 text-zinc-900 font-medium transition-colors flex items-center gap-3"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-4 w-4"
+                            >
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Profile</span>
+                            <span className="ml-auto text-xs text-blue-600 font-medium">Active</span>
+                          </button>
+                        ) : (
+                          /* Show both profiles if not acting as any role */
+                          <>
+                            <button
+                              onClick={() => handleProfileClick("vendor")}
+                              className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-gradient-to-r hover:from-blue-50 hover:via-teal-50 hover:to-emerald-50 transition-colors flex items-center gap-3"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-4 w-4"
+                              >
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                              </svg>
+                              <span>Vendor Profile</span>
+                            </button>
+                            <button
+                              onClick={() => handleProfileClick("customer")}
+                              className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-gradient-to-r hover:from-blue-50 hover:via-teal-50 hover:to-emerald-50 transition-colors flex items-center gap-3"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-4 w-4"
+                              >
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                              </svg>
+                              <span>Customer Profile</span>
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : (
                     <button
-                      onClick={handleProfileClick}
+                        onClick={() => handleProfileClick()}
                       className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-gradient-to-r hover:from-blue-50 hover:via-teal-50 hover:to-emerald-50 transition-colors flex items-center gap-3"
                     >
                       <svg
@@ -406,6 +584,35 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
                       </svg>
                       <span>Profile</span>
                     </button>
+                    )}
+                    {/* Settings option for superadmin */}
+                    {isSuperAdmin && (
+                      <>
+                        <div className="border-t border-zinc-200 my-1" />
+                        <button
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            setIsSettingsOpen(true);
+                          }}
+                          className="w-full px-4 py-2.5 text-left text-sm text-zinc-900 hover:bg-gradient-to-r hover:from-blue-50 hover:via-teal-50 hover:to-emerald-50 transition-colors flex items-center gap-3"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4"
+                          >
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
+                          </svg>
+                          <span>Settings</span>
+                        </button>
+                      </>
+                    )}
                     <div className="border-t border-zinc-200 my-1" />
                     <button
                       onClick={handleSignOut}
@@ -436,9 +643,9 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
                   <p className="text-xs text-zinc-500">
                     {isSuperAdmin 
                       ? "Super Admin" 
-                      : userRole === "seller" 
+                      : userRole === "vendor" 
                         ? "Vendor" 
-                        : userRole === "buyer" 
+                        : userRole === "customer" 
                           ? "Customer" 
                           : "User"}
                   </p>
@@ -463,6 +670,9 @@ export function Sidebar({ isOpen, onToggle, onClose, isCollapsed = false, onColl
           </svg>
         </button>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   );
 }

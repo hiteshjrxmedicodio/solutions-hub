@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef } from "react";
 
 interface FormFieldProps {
   label: string;
@@ -14,15 +14,16 @@ interface FormFieldProps {
 export const FormField = forwardRef<HTMLDivElement, FormFieldProps>(
   ({ label, required, error, hint, className = "", children }, ref) => {
     return (
-      <div ref={ref} className={`space-y-1.5 ${className}`}>
-        <label className="block text-sm font-medium text-zinc-900 leading-5">
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
-        {hint && (
-          <p className="text-xs text-zinc-500 leading-relaxed">{hint}</p>
-        )}
-        {children}
+      <div ref={ref} className={`flex flex-col ${className}`}>
+        <div className="mb-1.5">
+          <label className="block text-sm font-medium text-zinc-900 leading-5">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        </div>
+        <div className="flex-1">
+          {children}
+        </div>
         {error && (
           <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -67,23 +68,52 @@ Input.displayName = "Input";
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: boolean;
+  autoResize?: boolean;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ error, className = "", ...props }, ref) => {
+  ({ error, className = "", autoResize = false, value, ...props }, ref) => {
+    const internalRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+      const textarea = internalRef.current;
+      if (autoResize && textarea) {
+        // Reset height to auto to get the correct scrollHeight
+        textarea.style.height = 'auto';
+        
+        // Set height based on scrollHeight, with a minimum height
+        const minHeight = 120; // Minimum height in pixels (approximately 3 rows)
+        const maxHeight = 600; // Maximum height in pixels to prevent it from getting too large
+        const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+        textarea.style.height = `${newHeight}px`;
+      }
+    }, [value, autoResize]);
+
+    // Combine refs: use the forwarded ref if provided, otherwise use internal ref
+    const setRef = (element: HTMLTextAreaElement | null) => {
+      internalRef.current = element;
+      if (typeof ref === 'function') {
+        ref(element);
+      } else if (ref && 'current' in ref) {
+        (ref as React.MutableRefObject<HTMLTextAreaElement | null>).current = element;
+      }
+    };
+
     return (
       <textarea
-        ref={ref}
+        ref={setRef}
         className={`
           w-full px-4 py-3 text-sm text-zinc-900 bg-white border rounded-xl
           transition-all duration-200 ease-in-out
-          placeholder:text-zinc-400 resize-y
+          placeholder:text-zinc-400 ${autoResize ? 'resize-none' : 'resize-y'}
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
           hover:border-zinc-400
           disabled:bg-zinc-50 disabled:text-zinc-500 disabled:cursor-not-allowed
+          ${autoResize ? 'overflow-y-auto' : ''}
           ${error ? "border-red-500 focus:ring-red-500 focus:border-red-500" : "border-zinc-300"}
           ${className}
         `}
+        value={value}
         {...props}
       />
     );

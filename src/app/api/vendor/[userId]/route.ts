@@ -11,8 +11,23 @@ export async function GET(
     const { userId } = await params;
     const user = await currentUser();
     const authUserId = user?.id;
+    const userEmail = user?.emailAddresses[0]?.emailAddress;
+    const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com";
     
-    if (!authUserId || authUserId !== userId) {
+    // Special case: medicodio maps to seed-medicodio in the database
+    // Allow super admin to access medicodio vendor profile
+    const actualUserId = userId === "medicodio" ? "seed-medicodio" : userId;
+    
+    // Allow access if: user is viewing their own profile OR superadmin is viewing any profile
+    if (!authUserId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    // Superadmin can access any vendor profile, otherwise user must be viewing their own
+    if (authUserId !== userId && !isSuperAdmin) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
@@ -20,13 +35,13 @@ export async function GET(
     }
 
     await connectDB();
-    const vendor = await Vendor.findOne({ userId });
+    const vendor = await Vendor.findOne({ userId: actualUserId });
 
     if (!vendor) {
       return NextResponse.json({
         success: false,
         error: "Vendor profile not found",
-      });
+      }, { status: 404 });
     }
 
     return NextResponse.json({

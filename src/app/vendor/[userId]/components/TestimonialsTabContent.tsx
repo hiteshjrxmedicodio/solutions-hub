@@ -64,8 +64,8 @@ export function TestimonialsTabContent({
     metrics: "",
   });
 
-  const isCustomer = user?.publicMetadata?.role === "buyer";
-  const isVendor = user?.publicMetadata?.role === "seller";
+  const isCustomer = user?.publicMetadata?.role === "customer";
+  const isVendor = user?.publicMetadata?.role === "vendor";
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

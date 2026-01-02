@@ -11,7 +11,7 @@ export interface IUser extends Document {
   imageUrl?: string; // Profile image from Clerk
   
   // Application Role
-  role: 'buyer' | 'seller' | 'superAdmin' | null; // null means not selected yet
+  role: 'customer' | 'vendor' | 'superadmin' | null; // null means not selected yet
   
   // Profile Completion
   hasInstitutionProfile: boolean;
@@ -81,7 +81,7 @@ const UserSchema: Schema = new Schema(
     },
     role: {
       type: String,
-      enum: ['buyer', 'seller', 'superAdmin', null],
+      enum: ['customer', 'vendor', 'superadmin', null],
       default: null,
       index: true,
       sparse: true, // Allows null values in unique index

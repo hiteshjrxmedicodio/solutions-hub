@@ -7,7 +7,6 @@ interface Product {
   name: string;
   description: string;
   category?: string[];
-  pricing?: string;
   features?: string[];
   demoLink?: string;
   trialLink?: string;

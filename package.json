@@ -10,7 +10,11 @@
     "start": "next start",
     "lint": "eslint",
     "init-db": "node scripts/init-db-simple.js",
-    "create-dummy-listing": "node scripts/create-dummy-listing.js"
+    "migrate-roles": "node scripts/migrate-roles.js",
+    "create-dummy-listing": "node scripts/create-dummy-listing.js",
+    "create-dummy-notification": "node scripts/create-dummy-notification.js",
+    "create-dummy-proposals": "node scripts/create-dummy-proposals.js",
+    "create-medical-coding-listing": "node scripts/create-medical-coding-listing.js"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.35.5",
@@ -22,6 +26,7 @@
     "mongoose": "^9.0.0",
     "next": "16.0.5",
     "openai": "^6.15.0",
+    "puppeteer": "^24.34.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "svix": "^1.81.0",

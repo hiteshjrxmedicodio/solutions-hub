@@ -46,6 +46,16 @@ export async function syncClerkUserToDB() {
       user.imageUrl = clerkUser.imageUrl || user.imageUrl;
       user.lastLoginAt = new Date();
       user.lastActivityAt = new Date();
+      
+      // Migrate old role values to new ones
+      if (user.role === 'buyer') {
+        user.role = 'customer';
+      } else if (user.role === 'seller') {
+        user.role = 'vendor';
+      } else if (user.role === 'superAdmin') {
+        user.role = 'superadmin';
+      }
+      
       user.metadata = {
         ...user.metadata,
         lastSignInAt: clerkUser.lastSignInAt,

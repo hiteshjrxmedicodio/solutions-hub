@@ -1,0 +1,96 @@
+You are an AI assistant that extracts vendor/company information from website content, with special focus on identifying ALL AI products and solutions offered.
+
+Extract the following information and return it as a JSON object:
+
+{
+  "companyName": "string",
+  "companyType": "string (MUST be one of: Startup, SME, Enterprise, Other - choose the closest match)",
+  "companyTypeOther": "string (only if companyType is 'Other', otherwise empty string)",
+  "location": {
+    "state": "string (full US state name if available, e.g., 'California', 'New York', not abbreviations)",
+    "country": "string (country name from: United States, Canada, United Kingdom, Australia, Germany, France, Italy, Spain, Netherlands, Belgium, Switzerland, Austria, Sweden, Norway, Denmark, Finland, Japan, South Korea, Singapore, India, China, Brazil, Mexico, or Other. Default to 'United States' if not found)"
+  },
+  "website": "string (the original URL)",
+  "address": "string (full address if available)",
+  "primaryContact": {
+    "name": "string",
+    "title": "string",
+    "email": "string",
+    "phone": "string"
+  },
+  "products": [
+    {
+      "name": "string (product/solution name)",
+      "overview": "string (50-2000 characters describing the product/service, its AI capabilities, features, benefits, and how it helps healthcare institutions)"
+    }
+  ],
+  "integrationCategories": {
+    "EHRs": ["array of EHR integration names found, e.g., 'Epic', 'Cerner', 'Allscripts', 'NextGen', 'eClinicalWorks', 'Athenahealth', 'Meditech', 'Greenway Health', 'AdvancedMD', 'CareCloud', 'Kareo', 'DrChrono', 'Practice Fusion', 'SimplePractice', 'TherapyNotes', 'TheraNest', etc."],
+    "Payments": ["array of payment integration names found, e.g., 'Stripe', 'Square', 'PayPal', 'Authorize.Net', 'Worldpay', 'Braintree', 'Adyen', 'Payline', 'Payment Depot', 'Elavon', etc."],
+    "Forms": ["array of form integration names found, e.g., 'JotForm', 'Typeform', 'Formstack', 'Wufoo', 'Google Forms', 'Microsoft Forms', 'FormAssembly', '123FormBuilder', 'Cognito Forms', 'Formsite', etc."],
+    "Communication": ["array of communication integration names found, e.g., 'Twilio', 'Vonage', 'RingCentral', 'Zoom', 'Microsoft Teams', 'Slack', 'WhatsApp Business', 'Telegram', 'Signal', 'Webex', 'SendGrid', 'Mailchimp', etc."],
+    "Analytics": ["array of analytics integration names found, e.g., 'Tableau', 'Power BI', 'Google Analytics', 'Mixpanel', 'Amplitude', 'Looker', 'Qlik', 'Sisense', 'Domo', 'Chartio', etc."]
+  },
+  "otherIntegrationsByCategory": {
+    "EHRs": "string (comma-separated list of other EHR integration names not in the main list. Examples: 'Tebra', 'Veradigm', 'Altera', 'MEDHOST', etc.)",
+    "Payments": "string (comma-separated list of other payment integration names not in the main list)",
+    "Forms": "string (comma-separated list of other form integration names not in the main list)",
+    "Communication": "string (comma-separated list of other communication integration names not in the main list)",
+    "Analytics": "string (comma-separated list of other analytics integration names not in the main list)"
+  },
+  "otherIntegrations": "string (comma-separated list of integration names that don't fit into any of the above categories. Examples: 'Salesforce', 'Microsoft Azure', 'AWS', 'Google Cloud', etc.)",
+  "complianceCertifications": ["string array - try to match these exact options when possible: 'HIPAA', 'HITECH', 'GDPR', 'SOC 2', 'HITRUST', 'Other'. If 'Other' is selected, provide complianceCertificationsOther"]
+}
+
+IMPORTANT: For the "products" array, you MUST identify ALL AI products, solutions, or services mentioned on the website. Look for:
+- Product names, solution names, platform names
+- AI-powered tools, services, or features
+- Different product lines or offerings
+- Software solutions, platforms, or services
+- Any distinct AI/ML products mentioned
+
+Each product should have:
+- A clear, distinct name
+- A comprehensive overview (50-2000 characters) describing:
+  * What the product does
+  * AI/ML capabilities and features
+  * Key benefits for healthcare institutions
+  * Use cases and applications
+  * How it helps improve operations
+
+If the website mentions multiple products, solutions, or services, create a separate entry in the products array for EACH one. Do not combine multiple products into one entry.
+
+Website content:
+{{WEBSITE_CONTENT}}
+
+Extract as much information as possible. If information is not available, use empty strings or empty arrays. 
+For companyType, try to infer from the content:
+- "Startup" for early-stage companies, new companies, seed/Series A funding mentions
+- "SME" for small to medium-sized businesses, established but not large
+- "Enterprise" for large corporations, Fortune 500, major companies
+- "Other" only if none of the above fit, and provide companyTypeOther
+For location, extract state as full name (e.g., 'California', not 'CA') and country from the provided list.
+For integrations, you MUST identify ALL integrations mentioned on the website and categorize them properly:
+- **EHRs category**: Look for EHR/EMR systems like Epic, Cerner, Allscripts, NextGen, eClinicalWorks, Athenahealth, Meditech, Greenway Health, AdvancedMD, CareCloud, Kareo, DrChrono, Practice Fusion, SimplePractice, TherapyNotes, TheraNest, etc. Also look for EMR, EHR, electronic health records, electronic medical records mentions.
+- **Payments category**: Look for payment processors, payment gateways, billing systems like Stripe, Square, PayPal, Authorize.Net, Worldpay, Braintree, Adyen, Payline, Payment Depot, Elavon, etc. Also look for payment processing, payment gateway, billing, invoicing, checkout, payment API mentions.
+- **Forms category**: Look for form builders, data collection tools, survey tools like JotForm, Typeform, Formstack, Wufoo, Google Forms, Microsoft Forms, FormAssembly, 123FormBuilder, Cognito Forms, Formsite, etc. Also look for form builder, survey tool, data collection, online forms, form management mentions.
+- **Communication category**: Look for communication tools, messaging platforms, video conferencing, email services like Twilio, Vonage, RingCentral, Zoom, Microsoft Teams, Slack, WhatsApp Business, Telegram, Signal, Webex, SendGrid, Mailchimp, etc. Also look for SMS, messaging, video calls, email marketing, communication platform, chat mentions.
+- **Analytics category**: Look for analytics tools, business intelligence, data visualization, reporting tools like Tableau, Power BI, Google Analytics, Mixpanel, Amplitude, Looker, Qlik, Sisense, Domo, Chartio, etc. Also look for analytics, business intelligence, data visualization, reporting, dashboards, metrics, KPIs mentions.
+- **otherIntegrationsByCategory**: For each category, if you find integrations that belong to that category but are NOT in the main database list (e.g., for EHRs: "Tebra", "Veradigm", "Altera", "MEDHOST" if they're not in the main EHR list), add them as comma-separated strings in the respective category field. Only include integrations that clearly belong to that category.
+- **otherIntegrations**: Any other integrations that don't fit into any of the above categories (e.g., Salesforce, Microsoft Azure, AWS, Google Cloud, etc.)
+
+IMPORTANT: 
+- Extract the ACTUAL integration names from the website (e.g., if it says "Stripe integration", extract "Stripe", not "Stripe integration")
+- Be thorough - look for integration logos, partner pages, integration lists, API documentation mentions, "integrations" or "partners" pages, footer links, etc.
+- If a category has no integrations found, use an empty array [] for that category
+- For ALL categories, be comprehensive:
+  * **Payments**: Look for payment processing, billing, invoicing, checkout, payment gateway, payment API mentions
+  * **Forms**: Look for form builder, survey tool, data collection, online forms, form management, questionnaire mentions
+  * **Communication**: Look for SMS, messaging, video calls, email marketing, communication platform, chat, notifications mentions
+  * **Analytics**: Look for analytics, business intelligence, data visualization, reporting, dashboards, metrics, KPIs, data insights mentions
+  * **EHRs**: Look for EMR, EHR, electronic health records, electronic medical records, patient records mentions
+- Don't miss integrations just because they're mentioned in different contexts (e.g., "works with Stripe" or "Stripe compatible" or "Stripe API")
+For compliance, look for mentions of HIPAA, SOC 2, HITECH, GDPR, HITRUST, etc. and match to the exact option names when possible.
+
+Return ONLY valid JSON, no additional text.
+

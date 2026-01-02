@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { useUser } from "@clerk/nextjs";
 
 interface UserData {
-  role: "buyer" | "seller" | "superAdmin" | null;
+  role: "customer" | "vendor" | "superadmin" | null;
   hasInstitutionProfile: boolean;
   hasVendorProfile: boolean;
   profileCompletedAt?: Date;
@@ -15,7 +15,9 @@ interface UserContextType {
   userData: UserData | null;
   isLoading: boolean;
   refetch: () => Promise<void>;
-  updateRole: (role: "buyer" | "seller" | "superAdmin" | null) => void;
+  updateRole: (role: "customer" | "vendor" | "superadmin" | null) => void;
+  actingAs: "customer" | "vendor" | null;
+  setActingAs: (role: "customer" | "vendor" | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -23,11 +25,13 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 const CACHE_KEY = "user_data_cache";
 const CACHE_TIMESTAMP_KEY = "user_data_cache_timestamp";
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const ACTING_AS_KEY = "superadmin_acting_as";
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const { user, isLoaded } = useUser();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [actingAs, setActingAsState] = useState<"customer" | "vendor" | null>(null);
 
   // Load from cache on mount
   useEffect(() => {
@@ -54,6 +58,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(CACHE_KEY);
         localStorage.removeItem(CACHE_TIMESTAMP_KEY);
       }
+    }
+
+    // Load actingAs role from localStorage
+    const savedActingAs = localStorage.getItem(ACTING_AS_KEY);
+    if (savedActingAs === "customer" || savedActingAs === "vendor") {
+      setActingAsState(savedActingAs);
     }
   }, []);
 
@@ -127,7 +137,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await fetchUserData();
   };
 
-  const updateRole = (role: "buyer" | "seller" | null) => {
+  const updateRole = (role: "customer" | "vendor" | "superadmin" | null) => {
     if (userData) {
       const updated = { ...userData, role };
       setUserData(updated);
@@ -140,8 +150,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setActingAs = (role: "customer" | "vendor" | null) => {
+    setActingAsState(role);
+    if (typeof window !== "undefined") {
+      if (role) {
+        localStorage.setItem(ACTING_AS_KEY, role);
+      } else {
+        localStorage.removeItem(ACTING_AS_KEY);
+      }
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ userData, isLoading, refetch, updateRole }}>
+    <UserContext.Provider value={{ userData, isLoading, refetch, updateRole, actingAs, setActingAs }}>
       {children}
     </UserContext.Provider>
   );

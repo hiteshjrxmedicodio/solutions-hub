@@ -71,7 +71,6 @@ const ListingSchema: Schema = new Schema(
     userId: {
       type: String,
       required: true,
-      index: true,
     },
     institutionId: {
       type: String,
@@ -186,7 +185,6 @@ const ListingSchema: Schema = new Schema(
       type: String,
       enum: ['draft', 'active', 'in_progress', 'completed', 'cancelled'],
       default: 'draft',
-      index: true,
     },
     proposalsCount: {
       type: Number,

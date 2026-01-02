@@ -46,7 +46,6 @@ export const ContactTimeSelector = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField 
           label="Available Days"
-          hint="Select when you're available"
         >
           <StyledSelect
             value={days}
@@ -58,7 +57,6 @@ export const ContactTimeSelector = ({
 
         <FormField 
           label="Time Zone"
-          hint="Select your time zone"
         >
           <StyledSelect
             value={timeZone}
@@ -74,7 +72,6 @@ export const ContactTimeSelector = ({
       <div className="grid grid-cols-2 gap-4">
         <FormField 
           label="Start Time"
-          hint="e.g., 09:00"
         >
           <Input
             type="time"
@@ -87,7 +84,6 @@ export const ContactTimeSelector = ({
 
         <FormField 
           label="End Time"
-          hint="e.g., 17:00"
         >
           <Input
             type="time"

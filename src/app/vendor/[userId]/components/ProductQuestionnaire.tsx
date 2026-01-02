@@ -8,7 +8,6 @@ interface Product {
   name: string;
   description: string;
   category?: string[];
-  pricing?: string;
   features?: string[];
   demoLink?: string;
   trialLink?: string;
@@ -45,7 +44,6 @@ export function ProductQuestionnaire({
     name: "",
     description: "",
     category: [],
-    pricing: "",
     features: [],
     demoLink: "",
     trialLink: "",
@@ -60,7 +58,6 @@ export function ProductQuestionnaire({
         name: "",
         description: "",
         category: [],
-        pricing: "",
         features: [],
         demoLink: "",
         trialLink: "",
@@ -107,7 +104,6 @@ export function ProductQuestionnaire({
         name: "",
         description: "",
         category: [],
-        pricing: "",
         features: [],
         demoLink: "",
         trialLink: "",
@@ -184,15 +180,6 @@ export function ProductQuestionnaire({
                 onValueChange={(value) => updateField("category", value)}
                 options={PRODUCT_CATEGORIES}
                 placeholder="Select categories"
-              />
-            </FormField>
-
-            <FormField label="Pricing">
-              <Input
-                type="text"
-                value={formData.pricing || ""}
-                onChange={(e) => updateField("pricing", e.target.value)}
-                placeholder="e.g., $50,000 - $100,000"
               />
             </FormField>
 

@@ -3,6 +3,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import connectDB from "@/lib/db";
 import Listing from "@/models/Listing";
 
+const SUPER_ADMIN_EMAIL = "hitesh.ms24@gmail.com";
+
 // GET - Fetch a single listing by ID
 export async function GET(
   request: NextRequest,
@@ -73,8 +75,12 @@ export async function PUT(
       );
     }
     
-    // Check if user owns the listing
-    if (listing.userId !== user.id) {
+    // Check if user is super admin
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL;
+    
+    // Check if user owns the listing or is super admin
+    if (listing.userId !== user.id && !isSuperAdmin) {
       return NextResponse.json(
         {
           success: false,
@@ -145,8 +151,12 @@ export async function DELETE(
       );
     }
     
-    // Check if user owns the listing
-    if (listing.userId !== user.id) {
+    // Check if user is super admin
+    const userEmail = user.emailAddresses[0]?.emailAddress;
+    const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL || user?.publicMetadata?.role === "superadmin";
+    
+    // Check if user owns the listing or is super admin
+    if (listing.userId !== user.id && !isSuperAdmin) {
       return NextResponse.json(
         {
           success: false,

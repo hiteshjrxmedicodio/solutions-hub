@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 interface ListingCardProps {
   id: string;
   title: string;
@@ -12,7 +14,14 @@ interface ListingCardProps {
   viewsCount?: number;
   status: string;
   createdAt: string;
+  userId?: string;
+  currentUserId?: string;
+  userEmail?: string;
+  userRole?: string;
   onClick?: (id: string) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onToggleStatus?: (id: string, newStatus: string) => void;
 }
 
 const priorityColors = {
@@ -34,13 +43,61 @@ export function ListingCard({
   viewsCount = 0,
   status,
   createdAt,
+  userId,
+  currentUserId,
+  userEmail,
+  userRole,
   onClick,
+  onEdit,
+  onDelete,
+  onToggleStatus,
 }: ListingCardProps) {
+  const [isToggling, setIsToggling] = React.useState(false);
+
   const handleClick = () => {
     if (onClick) {
       onClick(id);
     }
   };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(id);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
+
+  const handleToggleStatus = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!onToggleStatus || isToggling) return;
+    
+    setIsToggling(true);
+    try {
+      // Toggle between 'active' and 'draft' (inactive)
+      const newStatus = status === 'active' ? 'draft' : 'active';
+      await onToggleStatus(id, newStatus);
+    } catch (error) {
+      console.error('Error toggling status:', error);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
+  // Check if current user is the owner (customer) or super admin
+  // Edit is only for: super admin OR customer who created the listing
+  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superadmin";
+  const isOwner = userId === currentUserId && userRole === "customer";
+  const canEditOrDelete = isOwner || isSuperAdmin;
+  // Toggle status is ONLY for customers who created the listing (not vendors, not superadmins)
+  const canToggleStatus = isOwner && userRole === "customer";
+  const isActive = status === 'active';
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -65,9 +122,35 @@ export function ListingCard({
         <h3 className="text-lg font-bold text-zinc-900 flex-1 line-clamp-2 group-hover:text-zinc-700 transition-colors">
           {title}
         </h3>
-        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border flex-shrink-0 capitalize ${priorityColors[priority]}`}>
-          {priority}
-        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {canEditOrDelete && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleEdit}
+                className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-600 hover:text-zinc-900"
+                title="Edit listing"
+                aria-label="Edit listing"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-1.5 hover:bg-red-50 rounded-lg transition-colors text-zinc-600 hover:text-red-600"
+                title="Delete listing"
+                aria-label="Delete listing"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          )}
+          <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border flex-shrink-0 capitalize ${priorityColors[priority]}`}>
+            {priority}
+          </span>
+        </div>
       </div>
       
       {/* Description */}
@@ -96,48 +179,33 @@ export function ListingCard({
       
       {/* Footer */}
       <div className="mt-auto pt-4 border-t border-zinc-100">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-4 flex-wrap">
-            {budgetRange && budgetRange !== 'Not specified' && (
-              <span className="flex items-center gap-1.5 text-xs text-zinc-600 font-medium">
-                <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {budgetRange}
+        <div className="flex items-center justify-between">
+          <span className="text-zinc-500 font-medium text-xs">{formatDate(createdAt)}</span>
+          {/* Active/Inactive Toggle - Only for customer owners (not vendors, not superadmins), in bottom right corner */}
+          {canToggleStatus && (
+            <div className="flex items-center gap-1.5">
+              <span className={`text-xs font-medium ${isActive ? 'text-green-600' : 'text-zinc-500'}`}>
+                {isActive ? 'Active' : 'Inactive'}
               </span>
-            )}
-            {timeline && (
-              <span className="flex items-center gap-1.5 text-xs text-zinc-600 font-medium">
-                <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {timeline}
-              </span>
-            )}
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-zinc-500 font-medium">{formatDate(createdAt)}</span>
-          <div className="flex items-center gap-4">
-            {proposalsCount > 0 && (
-              <span className="flex items-center gap-1.5 text-zinc-600 font-medium">
-                <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                {proposalsCount}
-              </span>
-            )}
-            {viewsCount > 0 && (
-              <span className="flex items-center gap-1.5 text-zinc-600 font-medium">
-                <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-                {viewsCount}
-              </span>
-            )}
-          </div>
+              <button
+                onClick={handleToggleStatus}
+                disabled={isToggling}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                  isActive
+                    ? 'bg-green-500'
+                    : 'bg-zinc-300'
+                } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                title={isActive ? 'Click to deactivate' : 'Click to activate'}
+                aria-label={isActive ? 'Deactivate listing' : 'Activate listing'}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                    isActive ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

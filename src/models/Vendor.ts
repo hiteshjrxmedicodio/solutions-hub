@@ -177,7 +177,6 @@ const VendorSchema: Schema = new Schema(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     // Section 1: Company Information
     companyName: {

@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     // 6. Company search count - Count searches that match vendor's categories or company name
     const companySearchCount = await SavedSearch.countDocuments({
-      userRole: "buyer",
+      userRole: "customer",
       isActive: true,
       $or: [
         {

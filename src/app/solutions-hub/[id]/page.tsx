@@ -31,7 +31,7 @@ export default function SolutionDetailPage() {
 
   // Redirect vendors away from solution detail pages
   useEffect(() => {
-    if (isLoaded && !isLoadingUserData && user && userRole === "seller" && user.id) {
+    if (isLoaded && !isLoadingUserData && user && userRole === "vendor" && user.id) {
       router.push(`/vendor/${user.id}`);
     }
   }, [isLoaded, isLoadingUserData, user, userRole, router]);
@@ -89,7 +89,7 @@ export default function SolutionDetailPage() {
   }
 
   // If vendor, don't render (will redirect)
-  if (userRole === "seller") {
+  if (userRole === "vendor") {
     return null;
   }
 

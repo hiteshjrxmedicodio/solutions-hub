@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useUserData } from "@/contexts/UserContext";
 import { OnboardingGuard } from "@/components/OnboardingGuard";
@@ -9,6 +9,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ListingCard } from "./components/ListingCard";
 import { CreateListingModal } from "./components/CreateListingModal";
 import { ListingDetailModal } from "./components/ListingDetailModal";
+import { DeleteListingModal } from "./components/DeleteListingModal";
 
 interface Listing {
   _id: string;
@@ -18,6 +19,7 @@ interface Listing {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   budgetRange?: string;
   timeline?: string;
+  userId?: string;
   proposalsCount: number;
   viewsCount: number;
   status: string;
@@ -26,22 +28,33 @@ interface Listing {
 
 function ListingsContent() {
   const { user, isLoaded } = useUser();
-  const { userData, isLoading: isLoadingUserData } = useUserData();
+  const { userData, isLoading: isLoadingUserData, actingAs } = useUserData();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'my' | 'active'>('active');
+  const [filter, setFilter] = useState<'all' | 'my' | 'active'>('all');
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
   const [budgetFilter, setBudgetFilter] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const [editListingId, setEditListingId] = useState<string | null>(null);
+  const [editListingData, setEditListingData] = useState<any>(null);
+  const [deleteListingId, setDeleteListingId] = useState<string | null>(null);
+  const [deleteListingTitle, setDeleteListingTitle] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isManuallyAddingListing = useRef(false);
 
   const userRole = userData?.role;
+  const userEmail = user?.emailAddresses[0]?.emailAddress || "";
+  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superadmin";
+  // Use actingAs role if set, otherwise use actual role
+  const effectiveRole = actingAs || userRole;
   
   // Get unique categories from listings
   const allCategories = Array.from(
@@ -49,14 +62,58 @@ function ListingsContent() {
   ).sort();
 
   useEffect(() => {
-    // Redirect vendors away from listings page
-    if (isLoaded && !isLoadingUserData && user && userRole === "seller" && user.id) {
+    // Redirect vendors away from listings page (but not superadmin)
+    if (isLoaded && !isLoadingUserData && user && effectiveRole === "vendor" && !isSuperAdmin && user.id) {
       router.push(`/vendor/${user.id}`);
     }
-  }, [isLoaded, isLoadingUserData, user, userRole, router]);
+  }, [isLoaded, isLoadingUserData, user, effectiveRole, isSuperAdmin, router]);
 
+  // Check for edit query parameter and fetch listing data
   useEffect(() => {
-    async function fetchListings() {
+    const editId = searchParams.get('edit');
+    if (editId && isLoaded && !isLoadingUserData) {
+      setEditListingId(editId);
+      // Fetch listing data for editing
+      fetch(`/api/listings/${editId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data) {
+            const listing = data.data;
+            setEditListingData({
+              title: listing.title,
+              description: listing.description,
+              category: listing.category,
+              priority: listing.priority,
+              requiredFeatures: listing.requiredFeatures || [],
+              preferredFeatures: listing.preferredFeatures || [],
+              technicalRequirements: listing.technicalRequirements || [],
+              integrationRequirements: listing.integrationRequirements || [],
+              complianceRequirements: listing.complianceRequirements || [],
+              institutionName: listing.institutionName || "",
+              institutionType: listing.institutionType || "",
+              medicalSpecialties: listing.medicalSpecialties || [],
+              currentSystems: listing.currentSystems || [],
+              budgetRange: listing.budgetRange || "Not specified",
+              timeline: listing.timeline || "Exploring options",
+              contractType: listing.contractType || [],
+              deploymentPreference: listing.deploymentPreference || [],
+              contactName: listing.contactName || "",
+              contactEmail: listing.contactEmail || "",
+              contactPhone: listing.contactPhone || "",
+              contactTitle: listing.contactTitle || "",
+              additionalNotes: listing.additionalNotes || "",
+              status: listing.status || "draft",
+            });
+            setIsCreateModalOpen(true);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching listing for edit:", err);
+        });
+    }
+  }, [searchParams, isLoaded, isLoadingUserData]);
+
+  const fetchListings = useCallback(async () => {
       try {
         setLoading(true);
         let endpoint = '/api/listings';
@@ -75,7 +132,13 @@ function ListingsContent() {
         }
         const data = await response.json();
         if (data.success && data.data) {
-          setListings(data.data);
+        // Sort listings by createdAt (newest first) to ensure proper ordering
+        const sortedListings = [...data.data].sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA; // Descending order (newest first)
+        });
+        setListings(sortedListings);
         } else {
           throw new Error("Invalid response format");
         }
@@ -85,15 +148,38 @@ function ListingsContent() {
       } finally {
         setLoading(false);
       }
-    }
+  }, [filter, user?.id]);
 
+  useEffect(() => {
     if (isLoaded && !isLoadingUserData) {
+      // Skip automatic refetch if we're manually adding a listing
+      if (isManuallyAddingListing.current) {
+        isManuallyAddingListing.current = false;
+        return;
+      }
       fetchListings();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoaded, isLoadingUserData, filter, user?.id]);
 
-  // Filter listings by search query and filters
-  const filteredListings = listings.filter((listing) => {
+  // Refetch listings when page becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoaded && !isLoadingUserData) {
+        fetchListings();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, isLoadingUserData, filter, user?.id]);
+
+  // Filter and sort listings by search query and filters
+  const filteredListings = listings
+    .filter((listing) => {
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -120,6 +206,12 @@ function ListingsContent() {
     }
     
     return true;
+    })
+    .sort((a, b) => {
+      // Sort by createdAt (newest first)
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Descending order (newest first)
   });
 
   // Show loading while checking user role
@@ -134,8 +226,8 @@ function ListingsContent() {
     );
   }
 
-  // If vendor, don't render (will redirect)
-  if (userRole === "seller") {
+  // If vendor (and not superadmin), don't render (will redirect)
+  if (effectiveRole === "vendor" && !isSuperAdmin) {
     return null;
   }
 
@@ -197,7 +289,7 @@ function ListingsContent() {
                   Post your project requirements and connect with vendors who can help
                 </p>
               </div>
-              {user && (
+              {user && effectiveRole !== "vendor" && (
                 <button
                   onClick={() => setIsCreateModalOpen(true)}
                   className="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-xl transition-all font-semibold shadow-md hover:shadow-lg flex items-center gap-2.5 transform hover:scale-105 active:scale-100"
@@ -279,7 +371,47 @@ function ListingsContent() {
                       viewsCount={listing.viewsCount}
                       status={listing.status}
                       createdAt={listing.createdAt}
+                      userId={listing.userId}
+                      currentUserId={user?.id}
+                      userEmail={user?.emailAddresses[0]?.emailAddress}
+                      userRole={effectiveRole}
                       onClick={(id) => setSelectedListingId(id)}
+                      onEdit={(id) => {
+                        router.push(`/listings?edit=${id}`);
+                      }}
+                      onDelete={(id) => {
+                        // Find the listing to get its title
+                        const listingToDelete = listings.find(l => l._id === id);
+                        setDeleteListingTitle(listingToDelete?.title || "");
+                        setDeleteListingId(id);
+                      }}
+                      onToggleStatus={async (id, newStatus) => {
+                        try {
+                          const response = await fetch(`/api/listings/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: newStatus }),
+                          });
+                          
+                          const data = await response.json();
+                          if (data.success) {
+                            // Update the listing in the local state
+                            setListings((prevListings) =>
+                              prevListings.map((listing) =>
+                                listing._id === id
+                                  ? { ...listing, status: newStatus }
+                                  : listing
+                              )
+                            );
+                          } else {
+                            throw new Error(data.error || 'Failed to update status');
+                          }
+                        } catch (error) {
+                          console.error('Error toggling listing status:', error);
+                          alert(error instanceof Error ? error.message : 'Failed to update listing status. Please try again.');
+                          throw error;
+                        }
+                      }}
                     />
                   ))}
                 </div>
@@ -299,6 +431,16 @@ function ListingsContent() {
                     </label>
                     <div className="flex flex-col gap-2">
                       <button
+                        onClick={() => setFilter('all')}
+                        className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                          filter === 'all'
+                            ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                            : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        All
+                      </button>
+                      <button
                         onClick={() => setFilter('active')}
                         className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
                           filter === 'active'
@@ -306,7 +448,7 @@ function ListingsContent() {
                             : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
                         }`}
                       >
-                        Active
+                        Active Only
                       </button>
                       {user && (
                         <button
@@ -320,16 +462,6 @@ function ListingsContent() {
                           My Requests
                         </button>
                       )}
-                      <button
-                        onClick={() => setFilter('all')}
-                        className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                          filter === 'all'
-                            ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                            : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                        }`}
-                      >
-                        All
-                      </button>
                     </div>
                   </div>
                   
@@ -416,11 +548,138 @@ function ListingsContent() {
           </div>
         </div>
       </div>
-      <CreateListingModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+      <CreateListingModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditListingId(null);
+          setEditListingData(null);
+          // Remove edit query param from URL
+          router.push('/listings');
+        }}
+        listingId={editListingId}
+        initialData={editListingData}
+        onEditSuccess={(listingId) => {
+          // Close edit modal and open listing detail modal
+          setIsCreateModalOpen(false);
+          setEditListingId(null);
+          setEditListingData(null);
+          setSelectedListingId(listingId);
+          router.push('/listings');
+        }}
+        onListingCreated={(listingId) => {
+          // Set flag to prevent automatic refetch when we change filter
+          isManuallyAddingListing.current = true;
+          
+          // Fetch the newly created listing and add it to the top of the list
+          fetch(`/api/listings/${listingId}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.success && data.data) {
+                const newListing = data.data;
+                
+                // Add the new listing to the top of the current list immediately
+                setListings((prevListings) => {
+                  // Remove the listing if it already exists (in case of duplicates)
+                  const filtered = prevListings.filter(l => l._id !== listingId);
+                  // Add new listing at the beginning (most recent first)
+                  return [newListing, ...filtered].sort((a, b) => {
+                    const dateA = new Date(a.createdAt).getTime();
+                    const dateB = new Date(b.createdAt).getTime();
+                    return dateB - dateA; // Descending order (newest first)
+                  });
+                });
+                
+                // If listing is draft and current filter is 'active', switch to 'all' so it's visible
+                // If filter is already 'all' or 'my', no need to change
+                if (newListing.status === 'draft' && filter === 'active') {
+                  // Change to 'all' filter so the draft listing is visible
+                  // The flag will prevent the useEffect from refetching
+                  setFilter('all');
+                }
+                
+                // Reset flag after a delay to allow state updates to complete
+                setTimeout(() => {
+                  isManuallyAddingListing.current = false;
+                }, 500);
+                
+                // Open the newly created listing in the detail modal
+                setTimeout(() => {
+                  setSelectedListingId(listingId);
+                }, 300);
+              } else {
+                // Fallback: refresh all listings
+                isManuallyAddingListing.current = false;
+                fetchListings();
+                setTimeout(() => {
+                  setSelectedListingId(listingId);
+                }, 500);
+              }
+            })
+            .catch((err) => {
+              console.error("Error fetching new listing:", err);
+              // Fallback: refresh all listings
+              isManuallyAddingListing.current = false;
+              fetchListings();
+              setTimeout(() => {
+                setSelectedListingId(listingId);
+              }, 500);
+            });
+        }}
+      />
       <ListingDetailModal
         isOpen={selectedListingId !== null}
         onClose={() => setSelectedListingId(null)}
         listingId={selectedListingId}
+      />
+      <DeleteListingModal
+        isOpen={deleteListingId !== null}
+        onClose={() => {
+          setDeleteListingId(null);
+          setDeleteListingTitle("");
+        }}
+        onConfirm={async () => {
+          if (!deleteListingId) return;
+          
+          setIsDeleting(true);
+          try {
+            const response = await fetch(`/api/listings/${deleteListingId}`, {
+              method: 'DELETE',
+            });
+            const data = await response.json();
+            if (data.success) {
+              // Refresh listings
+              const endpoint = filter === 'my' && user?.id
+                ? `/api/listings?userId=${user.id}`
+                : filter === 'active'
+                ? '/api/listings?status=active'
+                : '/api/listings';
+              const res = await fetch(endpoint);
+              const listData = await res.json();
+              if (listData.success && listData.data) {
+                // Sort listings by createdAt (newest first)
+                const sortedListings = [...listData.data].sort((a, b) => {
+                  const dateA = new Date(a.createdAt).getTime();
+                  const dateB = new Date(b.createdAt).getTime();
+                  return dateB - dateA; // Descending order (newest first)
+                });
+                setListings(sortedListings);
+              }
+              // Close modal
+              setDeleteListingId(null);
+              setDeleteListingTitle("");
+            } else {
+              alert('Failed to delete listing: ' + (data.error || 'Unknown error'));
+            }
+          } catch (error) {
+            console.error('Error deleting listing:', error);
+            alert('Failed to delete listing. Please try again.');
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+        listingTitle={deleteListingTitle}
+        isDeleting={isDeleting}
       />
     </div>
   );

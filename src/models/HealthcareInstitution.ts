@@ -70,7 +70,6 @@ const HealthcareInstitutionSchema: Schema = new Schema(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     selectedAISolutions: [{
       type: String,

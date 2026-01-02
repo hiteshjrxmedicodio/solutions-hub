@@ -112,6 +112,10 @@ interface ListingFormData {
 interface CreateListingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  listingId?: string | null;
+  initialData?: Partial<ListingFormData> | null;
+  onEditSuccess?: (listingId: string) => void;
+  onListingCreated?: (listingId: string) => void;
 }
 
 const STEPS = [
@@ -122,12 +126,41 @@ const STEPS = [
   { id: 5, name: "Review & Submit" },
 ];
 
-export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps) {
+export function CreateListingModal({ isOpen, onClose, listingId, initialData, onEditSuccess, onListingCreated }: CreateListingModalProps) {
   const router = useRouter();
   const { user } = useUser();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<ListingFormData>({
+  
+  const getInitialFormData = (): ListingFormData => {
+    if (initialData) {
+      return {
+        title: initialData.title || "",
+        description: initialData.description || "",
+        category: initialData.category || [],
+        priority: initialData.priority || "medium",
+        requiredFeatures: initialData.requiredFeatures || [],
+        preferredFeatures: initialData.preferredFeatures || [],
+        technicalRequirements: initialData.technicalRequirements || [],
+        integrationRequirements: initialData.integrationRequirements || [],
+        complianceRequirements: initialData.complianceRequirements || [],
+        institutionName: initialData.institutionName || "",
+        institutionType: initialData.institutionType || "",
+        medicalSpecialties: initialData.medicalSpecialties || [],
+        currentSystems: initialData.currentSystems || [],
+        budgetRange: initialData.budgetRange || "Not specified",
+        timeline: initialData.timeline || "Exploring options",
+        contractType: initialData.contractType || [],
+        deploymentPreference: initialData.deploymentPreference || [],
+        contactName: initialData.contactName || user?.firstName || "",
+        contactEmail: initialData.contactEmail || user?.emailAddresses[0]?.emailAddress || "",
+        contactPhone: initialData.contactPhone || "",
+        contactTitle: initialData.contactTitle || "",
+        additionalNotes: initialData.additionalNotes || "",
+        status: initialData.status || "draft",
+      };
+    }
+    return {
     title: "",
     description: "",
     category: [],
@@ -137,23 +170,76 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
     technicalRequirements: [],
     integrationRequirements: [],
     complianceRequirements: [],
-    // Institution Context
     institutionName: "",
     institutionType: "",
     medicalSpecialties: [],
     currentSystems: [],
-    // Business Details
     budgetRange: "Not specified",
     timeline: "Exploring options",
     contractType: [],
     deploymentPreference: [],
-    // Contact Information
     contactName: user?.firstName || "",
     contactEmail: user?.emailAddresses[0]?.emailAddress || "",
     contactPhone: "",
     contactTitle: "",
     additionalNotes: "",
     status: "draft",
+    };
+  };
+
+  const [formData, setFormData] = useState<ListingFormData>(() => {
+    if (initialData) {
+      return {
+        title: initialData.title || "",
+        description: initialData.description || "",
+        category: initialData.category || [],
+        priority: initialData.priority || "medium",
+        requiredFeatures: initialData.requiredFeatures || [],
+        preferredFeatures: initialData.preferredFeatures || [],
+        technicalRequirements: initialData.technicalRequirements || [],
+        integrationRequirements: initialData.integrationRequirements || [],
+        complianceRequirements: initialData.complianceRequirements || [],
+        institutionName: initialData.institutionName || "",
+        institutionType: initialData.institutionType || "",
+        medicalSpecialties: initialData.medicalSpecialties || [],
+        currentSystems: initialData.currentSystems || [],
+        budgetRange: initialData.budgetRange || "Not specified",
+        timeline: initialData.timeline || "Exploring options",
+        contractType: initialData.contractType || [],
+        deploymentPreference: initialData.deploymentPreference || [],
+        contactName: initialData.contactName || "",
+        contactEmail: initialData.contactEmail || "",
+        contactPhone: initialData.contactPhone || "",
+        contactTitle: initialData.contactTitle || "",
+        additionalNotes: initialData.additionalNotes || "",
+        status: initialData.status || "draft",
+      };
+    }
+    return {
+      title: "",
+      description: "",
+      category: [],
+      priority: "medium",
+      requiredFeatures: [],
+      preferredFeatures: [],
+      technicalRequirements: [],
+      integrationRequirements: [],
+      complianceRequirements: [],
+      institutionName: "",
+      institutionType: "",
+      medicalSpecialties: [],
+      currentSystems: [],
+      budgetRange: "Not specified",
+      timeline: "Exploring options",
+      contractType: [],
+      deploymentPreference: [],
+      contactName: "",
+      contactEmail: "",
+      contactPhone: "",
+      contactTitle: "",
+      additionalNotes: "",
+      status: "draft",
+    };
   });
 
   const [tempIntegrationReq, setTempIntegrationReq] = useState("");
@@ -161,23 +247,49 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
   const [tempCurrentSystem, setTempCurrentSystem] = useState("");
 
   useEffect(() => {
-    if (user && isOpen) {
+    if (user && isOpen && !initialData) {
       setFormData((prev) => ({
         ...prev,
         contactName: prev.contactName || user.firstName || "",
         contactEmail: prev.contactEmail || user.emailAddresses[0]?.emailAddress || "",
       }));
     }
-  }, [user, isOpen]);
+  }, [user, isOpen, initialData]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen && initialData) {
+      setFormData({
+        title: initialData.title || "",
+        description: initialData.description || "",
+        category: initialData.category || [],
+        priority: initialData.priority || "medium",
+        requiredFeatures: initialData.requiredFeatures || [],
+        preferredFeatures: initialData.preferredFeatures || [],
+        technicalRequirements: initialData.technicalRequirements || [],
+        integrationRequirements: initialData.integrationRequirements || [],
+        complianceRequirements: initialData.complianceRequirements || [],
+        institutionName: initialData.institutionName || "",
+        institutionType: initialData.institutionType || "",
+        medicalSpecialties: initialData.medicalSpecialties || [],
+        currentSystems: initialData.currentSystems || [],
+        budgetRange: initialData.budgetRange || "Not specified",
+        timeline: initialData.timeline || "Exploring options",
+        contractType: initialData.contractType || [],
+        deploymentPreference: initialData.deploymentPreference || [],
+        contactName: initialData.contactName || "",
+        contactEmail: initialData.contactEmail || "",
+        contactPhone: initialData.contactPhone || "",
+        contactTitle: initialData.contactTitle || "",
+        additionalNotes: initialData.additionalNotes || "",
+        status: initialData.status || "draft",
+      });
+    } else if (!isOpen) {
       setCurrentStep(1);
       setTempIntegrationReq("");
       setTempMedicalSpecialty("");
       setTempCurrentSystem("");
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   const updateField = (field: keyof ListingFormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -245,23 +357,66 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/listings", {
-        method: "POST",
+      const url = listingId ? `/api/listings/${listingId}` : "/api/listings";
+      const method = listingId ? "PUT" : "POST";
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Network error" }));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
 
       const data = await response.json();
       if (data.success) {
+        if (listingId) {
+          // After editing, close modal first, then open the listing detail modal
+          onClose();
+          router.refresh();
+          // Use setTimeout to ensure modal closes before opening detail modal
+          setTimeout(() => {
+            if (onEditSuccess) {
+              onEditSuccess(listingId);
+            }
+          }, 100);
+        } else {
+          // After creating, close modal first
         onClose();
-        router.push(`/listings/${data.data._id}`);
-        router.refresh();
+          // Notify parent to refresh listings and open the new listing in modal
+          if (onListingCreated) {
+            setTimeout(() => {
+              onListingCreated(data.data._id);
+            }, 300);
+          }
+          // Don't navigate - stay on listings page
+        }
       } else {
-        alert("Error: " + data.error);
+        const errorMessage = data.error || "Unknown error occurred";
+        console.error("API Error:", errorMessage);
+        alert("Error: " + errorMessage);
       }
     } catch (err) {
-      console.error("Error creating listing:", err);
-      alert("Failed to create listing. Please try again.");
+      console.error(`Error ${listingId ? 'updating' : 'creating'} listing:`, err);
+      let errorMessage = "Network error. Please check your connection and try again.";
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          errorMessage = "Request timed out. Please try again.";
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      alert(`Failed to ${listingId ? 'update' : 'create'} listing: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -270,12 +425,15 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col m-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      {/* Full screen backdrop blur */}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+      {/* Modal content */}
+      <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col m-4">
         {/* Header */}
         <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-zinc-900">Create New Listing</h2>
+            <h2 className="text-2xl font-bold text-zinc-900">{listingId ? "Edit Listing" : "Create New Listing"}</h2>
             <p className="text-sm text-zinc-600 mt-1">Step {currentStep} of {STEPS.length}: {STEPS[currentStep - 1].name}</p>
           </div>
           <button
@@ -298,9 +456,9 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
                       currentStep > step.id
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gradient-to-r from-blue-600 to-teal-600 text-white"
                         : currentStep === step.id
-                        ? "bg-blue-600 text-white"
+                        ? "bg-gradient-to-r from-blue-600 to-teal-600 text-white"
                         : "bg-zinc-200 text-zinc-600"
                     }`}
                   >
@@ -320,7 +478,7 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
                 </div>
                 {index < STEPS.length - 1 && (
                   <div className={`flex-1 h-0.5 mx-2 ${
-                    currentStep > step.id ? "bg-blue-600" : "bg-zinc-200"
+                    currentStep > step.id ? "bg-gradient-to-r from-blue-600 to-teal-600" : "bg-zinc-200"
                   }`} />
                 )}
               </div>
@@ -808,7 +966,9 @@ export function CreateListingModal({ isOpen, onClose }: CreateListingModalProps)
                   disabled={isSubmitting || !validateStep(currentStep)}
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? "Creating..." : "Create Listing"}
+                  {isSubmitting 
+                    ? (listingId ? "Saving..." : "Creating...") 
+                    : (listingId ? "Save Changes" : "Create Listing")}
                 </button>
               )}
             </div>

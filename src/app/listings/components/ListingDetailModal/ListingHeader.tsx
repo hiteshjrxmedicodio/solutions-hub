@@ -10,6 +10,7 @@ interface ListingHeaderProps {
   listingId: string;
   isOwner: boolean;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
 /**
@@ -22,7 +23,7 @@ interface ListingHeaderProps {
  * - Metadata (budget, timeline, views, proposals)
  * - Edit button for owners
  */
-export function ListingHeader({ listing, listingId, isOwner, onClose }: ListingHeaderProps) {
+export function ListingHeader({ listing, listingId, isOwner, onClose, onEdit }: ListingHeaderProps) {
   const router = useRouter();
 
   // Memoize metadata items to avoid unnecessary re-renders
@@ -78,8 +79,12 @@ export function ListingHeader({ listing, listingId, isOwner, onClose }: ListingH
   }, [listing.budgetRange, listing.timeline, listing.viewsCount, listing.proposalsCount]);
 
   const handleEdit = () => {
+    if (onEdit) {
+      onEdit();
+    } else {
     onClose();
     router.push(`/listings/${listingId}/edit`);
+    }
   };
 
   return (
@@ -111,16 +116,39 @@ export function ListingHeader({ listing, listingId, isOwner, onClose }: ListingH
             </div>
           )}
         </div>
+        <div className="flex items-center gap-2 ml-4">
         {isOwner && (
           <button
             onClick={handleEdit}
-            className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-colors ml-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="Edit listing"
             type="button"
           >
             Edit
           </button>
         )}
+          <button
+            onClick={onClose}
+            className="p-1.5 bg-white rounded-full border border-zinc-300 shadow-lg hover:bg-zinc-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Close modal"
+            type="button"
+          >
+            <svg
+              className="w-4 h-4 text-zinc-700"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <p className="text-zinc-700 text-base leading-snug mb-2">{listing.description}</p>

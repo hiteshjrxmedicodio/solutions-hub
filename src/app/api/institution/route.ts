@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Transform the form data to match the schema
     const institutionData = {
       userId,
-      selectedAISolutions: body.selectedAISolutions || [],,
+      selectedAISolutions: body.selectedAISolutions || [],
       institutionName: body.institutionName,
       institutionType: body.institutionType,
       location: {

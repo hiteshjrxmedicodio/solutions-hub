@@ -73,6 +73,38 @@ export function Sidebar({ unreadCount }: SidebarProps) {
                 <div className="font-medium text-sm">Blog Post Agent</div>
               </div>
             </Link>
+            <Link
+              href="/developer/automation/vendor"
+              className={`flex flex-col gap-2 px-5 py-3.5 rounded-xl border transition-all ${
+                pathname === "/developer/automation/vendor"
+                  ? "border-2 border-purple-400 bg-purple-100 text-purple-700 shadow-sm"
+                  : "border-transparent hover:bg-purple-50 text-zinc-700 hover:text-purple-700 hover:border-purple-100"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-purple-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </div>
+                <div className="font-medium text-sm">Vendor Agent</div>
+              </div>
+              <div className="text-xs text-zinc-500 pl-11">
+                Automate vendor workflows
+              </div>
+            </Link>
           </nav>
 
           <div className="mt-4 pt-4 border-t border-zinc-200">

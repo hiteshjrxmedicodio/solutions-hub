@@ -70,7 +70,7 @@ async function init() {
       firstName: { type: String, trim: true },
       lastName: { type: String, trim: true },
       imageUrl: { type: String, trim: true },
-      role: { type: String, enum: ['buyer', 'seller', null], default: null },
+      role: { type: String, enum: ['customer', 'vendor', 'superadmin', null], default: null },
       hasInstitutionProfile: { type: Boolean, default: false },
       hasVendorProfile: { type: Boolean, default: false },
       profileCompletedAt: { type: Date },

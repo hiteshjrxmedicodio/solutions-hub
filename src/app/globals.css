@@ -85,6 +85,25 @@ select:focus {
   background: white !important;
 }
 
+/* Custom Scrollbar for Mac - Modern Design */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
 /* Solutions Hub Grid - Responsive */
 @media (max-width: 640px) {
   .solutions-grid {

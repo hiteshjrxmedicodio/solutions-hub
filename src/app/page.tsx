@@ -8,22 +8,31 @@ import { useUserData } from "@/contexts/UserContext";
 
 function HomeContent() {
   const { user, isLoaded } = useUser();
-  const { userData, isLoading: isLoadingUserData } = useUserData();
+  const { userData, isLoading: isLoadingUserData, actingAs } = useUserData();
   const router = useRouter();
 
   useEffect(() => {
     if (isLoaded && user && !isLoadingUserData && userData) {
       const userEmail = user.emailAddresses[0]?.emailAddress || "";
-      // Special case: Link hitesh.ms24@gmail.com to seed-medicodio vendor page
-      if (userEmail === "hitesh.ms24@gmail.com") {
+      const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userData.role === "superadmin";
+      // Use actingAs role if set, otherwise use actual role
+      const effectiveRole = actingAs || userData.role;
+      
+      // Special case: Link hitesh.ms24@gmail.com to seed-medicodio vendor page (unless acting as customer)
+      if (userEmail === "hitesh.ms24@gmail.com" && !actingAs) {
         router.push("/vendor/seed-medicodio");
-      } else if (userData.role === "seller" && user.id) {
+      } else if (effectiveRole === "vendor" && user.id) {
         router.push(`/vendor/${user.id}`);
-      } else if (userData.role === "buyer") {
+      } else if (effectiveRole === "customer" && user.id) {
+        router.push(`/customer/${user.id}`);
+      } else if (effectiveRole === "customer") {
         router.push("/solutions-hub");
+      } else if (isSuperAdmin && !actingAs) {
+        // Superadmin without actingAs goes to dashboard
+        router.push("/dashboard");
       }
     }
-  }, [isLoaded, user, userData, isLoadingUserData, router]);
+  }, [isLoaded, user, userData, isLoadingUserData, actingAs, router]);
 
   if (!isLoaded) {
     return (

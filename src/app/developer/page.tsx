@@ -52,6 +52,29 @@ const developerSections = [
     ),
     color: "blue",
   },
+  {
+    id: "onboarding",
+    name: "Onboarding Phase",
+    description: "Manage user onboarding process",
+    href: "/developer/onboarding",
+    icon: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-5 w-5"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+    color: "teal",
+  },
 ];
 
 export default function DeveloperPage() {
@@ -64,7 +87,7 @@ export default function DeveloperPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Check if user is super admin
-  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superAdmin";
+  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superadmin";
 
 
   useEffect(() => {
@@ -166,6 +189,9 @@ export default function DeveloperPage() {
                     blue: isActive
                       ? "bg-blue-100 text-blue-700 border-blue-300"
                       : "hover:bg-blue-50 text-zinc-700 hover:text-blue-700",
+                    teal: isActive
+                      ? "bg-teal-100 text-teal-700 border-teal-300"
+                      : "hover:bg-teal-50 text-zinc-700 hover:text-teal-700",
                   };
 
                   return (
@@ -184,6 +210,8 @@ export default function DeveloperPage() {
                                 ? "bg-purple-200"
                                 : section.color === "blue"
                                 ? "bg-blue-200"
+                                : section.color === "teal"
+                                ? "bg-teal-200"
                                 : "bg-zinc-200"
                               : "bg-zinc-200"
                           }`}
