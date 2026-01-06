@@ -11,9 +11,23 @@ interface CardData {
   title: string;
   description: string;
   category?: string;
+  categories?: string[];
+  companyType?: string;
+  companySize?: string;
+  integrationCapabilities?: string[];
+  deploymentOptions?: string[];
+  targetInstitutionTypes?: string[];
+  targetSpecialties?: string[];
   cols: number;
   rows: number;
   userId?: string; // Vendor userId for navigation
+}
+
+interface FilterState {
+  category: string | null;
+  companyType: string | null;
+  integration: string | null;
+  specialty: string | null;
 }
 
 export function SolutionsGrid() {
@@ -21,6 +35,12 @@ export function SolutionsGrid() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filters, setFilters] = useState<FilterState>({
+    category: null,
+    companyType: null,
+    integration: null,
+    specialty: null,
+  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
@@ -220,10 +240,50 @@ export function SolutionsGrid() {
     }));
   };
 
-  // Split cards into zones
-  const topZoneCards = cards.slice(0, TOP_ZONE_SIZE);
-  const middleZoneCards = cards.slice(MIDDLE_ZONE_START, BOTTOM_ZONE_START);
-  const bottomZoneCards = cards.slice(BOTTOM_ZONE_START);
+  // Filter cards based on search query and all filters
+  const filteredCards = cards.filter((card) => {
+    const matchesSearch = searchQuery === "" || 
+      card.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      card.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = !filters.category || 
+      card.category === filters.category || 
+      card.categories?.includes(filters.category);
+    const matchesCompanyType = !filters.companyType || card.companyType === filters.companyType;
+    const matchesIntegration = !filters.integration || 
+      card.integrationCapabilities?.includes(filters.integration);
+    const matchesSpecialty = !filters.specialty || 
+      card.targetSpecialties?.includes(filters.specialty);
+    
+    return matchesSearch && matchesCategory && matchesCompanyType && 
+           matchesIntegration && matchesSpecialty;
+  });
+
+  // Extract unique values for filter options
+  const categories = Array.from(new Set(
+    cards.flatMap(card => card.categories || (card.category ? [card.category] : []))
+  )).sort() as string[];
+  
+  const companyTypes = Array.from(new Set(
+    cards.map(card => card.companyType).filter(Boolean)
+  )).sort() as string[];
+  
+  const integrations = Array.from(new Set(
+    cards.flatMap(card => card.integrationCapabilities || [])
+  )).sort() as string[];
+  
+  const specialties = Array.from(new Set(
+    cards.flatMap(card => card.targetSpecialties || [])
+  )).sort() as string[];
+
+  const handleFilterChange = (filterKey: keyof FilterState, value: string | null) => {
+    setFilters(prev => ({ ...prev, [filterKey]: value }));
+  };
+
+  // Split filtered cards into zones
+  const topZoneCards = filteredCards.slice(0, TOP_ZONE_SIZE);
+  const middleZoneCards = filteredCards.slice(MIDDLE_ZONE_START, BOTTOM_ZONE_START);
+  const bottomZoneCards = filteredCards.slice(BOTTOM_ZONE_START);
 
   // Calculate equal split around search bar
   // Total cards in middle zone (excluding search bar)
@@ -328,6 +388,14 @@ export function SolutionsGrid() {
             rows={2} 
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            filterOptions={{
+              categories,
+              companyTypes,
+              integrations,
+              specialties,
+            }}
           />
 
             {/* Cards after search bar in middle zone */}

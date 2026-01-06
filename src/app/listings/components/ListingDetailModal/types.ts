@@ -43,6 +43,7 @@ export interface ListingDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   listingId: string | null;
+  onListingUpdate?: (listingId: string, updatedListing: Partial<Listing>) => void;
 }
 
 export const priorityColors: Record<'low' | 'medium' | 'high' | 'urgent', string> = {

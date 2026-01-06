@@ -43,3 +43,4 @@ const Specialty: Model<ISpecialty> =
 
 export default Specialty;
 
+

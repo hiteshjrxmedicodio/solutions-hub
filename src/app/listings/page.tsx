@@ -41,7 +41,6 @@ function ListingsContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
-  const [budgetFilter, setBudgetFilter] = useState<string>("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [editListingId, setEditListingId] = useState<string | null>(null);
@@ -119,7 +118,7 @@ function ListingsContent() {
         if (showCardsLoading) {
           setCardsLoading(true);
         } else {
-          setLoading(true);
+        setLoading(true);
         }
         let endpoint = '/api/listings';
         
@@ -136,14 +135,14 @@ function ListingsContent() {
           }
         } else {
           // Customer filters
-          if (filter === 'my' && user?.id) {
-            endpoint = `/api/listings?userId=${user.id}`;
-          } else if (filter === 'active') {
-            endpoint = '/api/listings?status=active';
+        if (filter === 'my' && user?.id) {
+          endpoint = `/api/listings?userId=${user.id}`;
+        } else if (filter === 'active') {
+          endpoint = '/api/listings?status=active';
           } else if (filter === 'draft') {
             endpoint = '/api/listings?status=draft';
-          } else if (filter === 'all') {
-            endpoint = '/api/listings';
+        } else if (filter === 'all') {
+          endpoint = '/api/listings';
           }
         }
         
@@ -170,9 +169,9 @@ function ListingsContent() {
         if (showCardsLoading) {
           setCardsLoading(false);
         } else {
-          setLoading(false);
-        }
+        setLoading(false);
       }
+    }
   }, [filter, user?.id, effectiveRole, isSuperAdmin, actingAs]);
 
   // Track if initial load is done
@@ -236,11 +235,6 @@ function ListingsContent() {
     
     // Priority filter
     if (priorityFilter && listing.priority !== priorityFilter) {
-      return false;
-    }
-    
-    // Budget filter
-    if (budgetFilter && listing.budgetRange !== budgetFilter) {
       return false;
     }
     
@@ -389,7 +383,7 @@ function ListingsContent() {
                   </div>
                   <h3 className="text-2xl font-bold text-zinc-900 mb-3">No requests found</h3>
                   <p className="text-zinc-600 mb-8 text-lg max-w-md mx-auto">
-                    {searchQuery || categoryFilter || priorityFilter || budgetFilter
+                    {searchQuery || categoryFilter || priorityFilter
                       ? 'Try adjusting your filters to see more results'
                       : 'Be the first to create a project request and connect with vendors'}
                   </p>
@@ -433,15 +427,15 @@ function ListingsContent() {
                         setDeleteListingId(id);
                       }}
                       onToggleStatus={async (id, newStatus) => {
-                        try {
-                          const response = await fetch(`/api/listings/${id}`, {
+                          try {
+                            const response = await fetch(`/api/listings/${id}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ status: newStatus }),
-                          });
+                            });
                           
-                          const data = await response.json();
-                          if (data.success) {
+                            const data = await response.json();
+                            if (data.success) {
                             // Update the listing in the local state
                             setListings((prevListings) =>
                               prevListings.map((listing) =>
@@ -450,10 +444,10 @@ function ListingsContent() {
                                   : listing
                               )
                             );
-                          } else {
+                            } else {
                             throw new Error(data.error || 'Failed to update status');
-                          }
-                        } catch (error) {
+                            }
+                          } catch (error) {
                           console.error('Error toggling listing status:', error);
                           alert(error instanceof Error ? error.message : 'Failed to update listing status. Please try again.');
                           throw error;
@@ -490,42 +484,42 @@ function ListingsContent() {
                           >
                             All Listings
                           </button>
-                          <button
-                            onClick={() => setFilter('active')}
-                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                              filter === 'active'
-                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                            }`}
-                          >
+                      <button
+                        onClick={() => setFilter('active')}
+                        className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                          filter === 'active'
+                            ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                            : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                        }`}
+                      >
                             Active Only
-                          </button>
-                          {user && (
-                            <button
-                              onClick={() => setFilter('my')}
-                              className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                                filter === 'my'
-                                  ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                                  : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                              }`}
-                            >
+                      </button>
+                      {user && (
+                        <button
+                          onClick={() => setFilter('my')}
+                          className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                            filter === 'my'
+                              ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                              : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                          }`}
+                        >
                               With My Proposals
-                            </button>
-                          )}
+                        </button>
+                      )}
                         </>
                       ) : (
                         // Customer filters
                         <>
-                          <button
-                            onClick={() => setFilter('all')}
-                            className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
-                              filter === 'all'
-                                ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
-                                : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
-                            }`}
-                          >
-                            All
-                          </button>
+                      <button
+                        onClick={() => setFilter('all')}
+                        className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
+                          filter === 'all'
+                            ? 'bg-gradient-to-r from-blue-600 to-teal-600 text-white shadow-md'
+                            : 'bg-blue-50 text-zinc-700 hover:bg-blue-100'
+                        }`}
+                      >
+                        All
+                      </button>
                           <button
                             onClick={() => setFilter('active')}
                             className={`px-4 py-2.5 text-left font-medium text-sm transition-all rounded-xl ${
@@ -600,32 +594,12 @@ function ListingsContent() {
                     </select>
                   </div>
                   
-                  {/* Budget Filter */}
-                  <div>
-                    <label className="block text-sm font-semibold text-zinc-900 mb-3">
-                      Budget Range
-                    </label>
-                    <select
-                      value={budgetFilter}
-                      onChange={(e) => setBudgetFilter(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-zinc-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-zinc-400 text-sm bg-white hover:bg-zinc-50 transition-colors"
-                    >
-                      <option value="">All Budgets</option>
-                      <option value="$0 - $50,000">$0 - $50,000</option>
-                      <option value="$50,000 - $100,000">$50,000 - $100,000</option>
-                      <option value="$100,000 - $500,000">$100,000 - $500,000</option>
-                      <option value="$500,000 - $1,000,000">$500,000 - $1,000,000</option>
-                      <option value="$1,000,000+">$1,000,000+</option>
-                    </select>
-                  </div>
-                  
                   {/* Clear Filters */}
-                  {(categoryFilter || priorityFilter || budgetFilter) && (
+                  {(categoryFilter || priorityFilter) && (
                     <button
                       onClick={() => {
                         setCategoryFilter("");
                         setPriorityFilter("");
-                        setBudgetFilter("");
                       }}
                       className="w-full px-4 py-2.5 border-2 border-zinc-300 rounded-xl hover:bg-zinc-50 hover:border-zinc-400 transition-all text-sm font-semibold text-zinc-700"
                     >
@@ -729,6 +703,16 @@ function ListingsContent() {
         isOpen={selectedListingId !== null}
         onClose={() => setSelectedListingId(null)}
         listingId={selectedListingId}
+        onListingUpdate={(listingId, updatedListing) => {
+          // Update the listing in the parent state when modal updates it
+          setListings((prevListings) =>
+            prevListings.map((listing) =>
+              listing._id === listingId
+                ? { ...listing, ...updatedListing }
+                : listing
+            )
+          );
+        }}
       />
       <DeleteListingModal
         isOpen={deleteListingId !== null}

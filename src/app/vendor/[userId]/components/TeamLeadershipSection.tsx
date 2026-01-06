@@ -94,3 +94,4 @@ export function TeamLeadershipSection({ teamMembers }: TeamLeadershipSectionProp
   );
 }
 
+

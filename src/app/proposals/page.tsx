@@ -543,11 +543,9 @@ function ProposalsContent() {
 
                   {/* Chat Messages */}
                   {messages.map((message) => {
-                    // For vendors: messages they sent (vendor role) are on right, customer messages on left
-                    // For customers: messages they sent (customer role) are on right, vendor messages on left
-                    const isSent = effectiveRole === "vendor" 
-                      ? message.senderRole === "vendor"
-                      : message.senderRole === "customer";
+                    // Check if the message was sent by the current user
+                    // Messages sent by current user should be on the right, received messages on the left
+                    const isSent = message.senderId === user?.id;
                     
                     return (
                       <div

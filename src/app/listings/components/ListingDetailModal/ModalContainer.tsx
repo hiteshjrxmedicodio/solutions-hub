@@ -78,8 +78,8 @@ export function ModalContainer({ isOpen, onClose, children }: ModalContainerProp
         {/* Content Container - Full height with equal padding */}
         <div className="flex-1 flex overflow-y-auto min-h-0">
           {/* Main Content */}
-          <div className="flex-1 p-5 w-full">
-            <div className="w-full">{children}</div>
+          <div className="flex-1 p-5 w-full pb-8">
+            <div className="w-full min-h-full">{children}</div>
           </div>
         </div>
       </div>

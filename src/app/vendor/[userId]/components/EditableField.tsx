@@ -7,6 +7,7 @@ interface EditableFieldProps {
   onSave: (newValue: string) => Promise<void>;
   isEditable?: boolean;
   isEditMode?: boolean;
+  onCancel?: () => void;
   multiline?: boolean;
   placeholder?: string;
   className?: string;
@@ -18,6 +19,7 @@ export function EditableField({
   onSave,
   isEditable = false,
   isEditMode = false,
+  onCancel,
   multiline = false,
   placeholder = "",
   className = "",
@@ -77,7 +79,18 @@ export function EditableField({
             placeholder={placeholder}
           />
         )}
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-2 mt-2 justify-end">
+          <button
+            onClick={() => {
+              setEditValue(value);
+              if (onCancel) {
+                onCancel();
+              }
+            }}
+            className="px-3 py-1.5 bg-zinc-600 text-white text-xs font-semibold rounded-lg hover:bg-zinc-700 transition-colors flex items-center gap-1.5"
+          >
+            Cancel
+          </button>
           <button
             onClick={handleSave}
             disabled={isSaving}

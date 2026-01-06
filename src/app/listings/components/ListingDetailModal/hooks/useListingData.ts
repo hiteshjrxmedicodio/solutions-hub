@@ -59,6 +59,8 @@ export function useListingData({ listingId, isOpen }: UseListingDataOptions): Us
 
   useEffect(() => {
     if (isOpen && listingId) {
+      // Always refetch when modal opens to ensure we have the latest data
+      // This ensures the modal shows the current status even if it was changed in the card
       fetchListing();
     } else {
       setListing(null);

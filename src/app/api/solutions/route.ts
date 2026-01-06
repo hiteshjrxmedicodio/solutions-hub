@@ -21,6 +21,13 @@ export async function GET() {
       title: vendor.companyName,
       description: vendor.solutionDescription || vendor.solutionName || '',
       category: vendor.solutionCategory?.[0] || undefined, // Use first category as primary
+      categories: vendor.solutionCategory || [], // All categories
+      companyType: vendor.companyType || undefined,
+      companySize: vendor.companySize || undefined,
+      integrationCapabilities: vendor.integrationCapabilities || [],
+      deploymentOptions: vendor.deploymentOptions || [],
+      targetInstitutionTypes: vendor.targetInstitutionTypes || [],
+      targetSpecialties: vendor.targetSpecialties || [],
       cols: vendor.cardCols || 2,
       rows: vendor.cardRows || 1,
       userId: vendor.userId, // Keep userId for navigation to vendor detail page

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Listing } from "./types";
 import { priorityColors } from "./types";
 
@@ -11,6 +11,7 @@ interface ListingHeaderProps {
   isOwner: boolean;
   onClose: () => void;
   onEdit?: () => void;
+  onToggleStatus?: (newStatus: string) => Promise<void>;
 }
 
 /**
@@ -23,8 +24,11 @@ interface ListingHeaderProps {
  * - Metadata (budget, timeline, views, proposals)
  * - Edit button for owners
  */
-export function ListingHeader({ listing, listingId, isOwner, onClose, onEdit }: ListingHeaderProps) {
+export function ListingHeader({ listing, listingId, isOwner, onClose, onEdit, onToggleStatus }: ListingHeaderProps) {
   const router = useRouter();
+  const [isToggling, setIsToggling] = useState(false);
+  
+  const isActive = listing.status === 'active';
 
   // Memoize metadata items to avoid unnecessary re-renders
   const metadataItems = useMemo(() => {
@@ -87,6 +91,21 @@ export function ListingHeader({ listing, listingId, isOwner, onClose, onEdit }: 
     }
   };
 
+  const handleToggleStatus = async () => {
+    if (!onToggleStatus || isToggling) return;
+    
+    setIsToggling(true);
+    try {
+      // Toggle between 'active' and 'draft' (inactive)
+      const newStatus = listing.status === 'active' ? 'draft' : 'active';
+      await onToggleStatus(newStatus);
+    } catch (error) {
+      console.error('Error toggling status:', error);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
   return (
     <header className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4 w-full">
       <div className="flex items-start justify-between mb-1.5">
@@ -118,6 +137,30 @@ export function ListingHeader({ listing, listingId, isOwner, onClose, onEdit }: 
         </div>
         <div className="flex items-center gap-2 ml-4">
         {isOwner && (
+          <>
+            {/* Active/Inactive Toggle */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-zinc-300 rounded-lg">
+              <span className={`text-xs font-medium ${isActive ? 'text-green-600' : 'text-zinc-500'}`}>
+                {isActive ? 'Active' : 'Inactive'}
+              </span>
+              <button
+                onClick={handleToggleStatus}
+                disabled={isToggling}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                  isActive
+                    ? 'bg-green-500'
+                    : 'bg-zinc-300'
+                } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                title={isActive ? 'Click to deactivate' : 'Click to activate'}
+                aria-label={isActive ? 'Deactivate listing' : 'Activate listing'}
+              >
+                <span
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                    isActive ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
           <button
             onClick={handleEdit}
               className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white rounded-lg transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -126,6 +169,7 @@ export function ListingHeader({ listing, listingId, isOwner, onClose, onEdit }: 
           >
             Edit
           </button>
+          </>
         )}
           <button
             onClick={onClose}

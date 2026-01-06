@@ -32,9 +32,13 @@ export function HowWeHelpSection({
     <div>
       <EditableField
         value={solutionDescription || ""}
-        onSave={handleSave}
+        onSave={async (newValue) => {
+          await handleSave(newValue);
+          setIsEditMode(false);
+        }}
         isEditable={isEditable}
         isEditMode={isEditMode}
+        onCancel={() => setIsEditMode(false)}
         multiline={true}
         placeholder="Enter how you help customers..."
         className="text-zinc-700 leading-relaxed"

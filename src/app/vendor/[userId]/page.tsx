@@ -184,7 +184,7 @@ export default function VendorDetailPage() {
           // If vendor is viewing their own page OR superadmin, use private endpoint (allows unapproved profiles)
           endpoint = `/api/vendor/${userId}`;
         } else {
-          // Otherwise, use public endpoint (only approved profiles)
+        // Otherwise, use public endpoint (only approved profiles)
           endpoint = `/api/vendor/public/${userId}`;
         }
         

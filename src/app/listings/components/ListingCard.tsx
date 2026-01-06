@@ -90,11 +90,10 @@ export function ListingCard({
     }
   };
 
-  // Check if current user is the owner (customer) or super admin
-  // Edit is only for: super admin OR customer who created the listing
-  const isSuperAdmin = userEmail === "hitesh.ms24@gmail.com" || userRole === "superadmin";
+  // Check if current user is the owner (customer)
+  // Edit/Delete is ONLY for customers who created the listing (not vendors, not superadmins)
   const isOwner = userId === currentUserId && userRole === "customer";
-  const canEditOrDelete = isOwner || isSuperAdmin;
+  const canEditOrDelete = isOwner && userRole === "customer";
   // Toggle status is ONLY for customers who created the listing (not vendors, not superadmins)
   const canToggleStatus = isOwner && userRole === "customer";
   const isActive = status === 'active';

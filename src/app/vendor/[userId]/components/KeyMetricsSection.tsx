@@ -316,19 +316,19 @@ export function KeyMetricsSection({
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3 pt-4">
-                  <button
-                    onClick={handleSave}
-                    disabled={!formData.image || isUploading}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Save
-                  </button>
+                <div className="flex gap-3 pt-4 justify-end">
                   <button
                     onClick={handleCloseModal}
                     className="px-4 py-2 bg-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-300 transition-colors font-semibold"
                   >
                     Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={!formData.image || isUploading}
+                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Save
                   </button>
                 </div>
               </div>

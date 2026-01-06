@@ -34,7 +34,7 @@ import { BusinessDetails } from "./ListingDetailModal/BusinessDetails";
  * @param onClose - Callback when modal should close
  * @param listingId - ID of the listing to display
  */
-export function ListingDetailModal({ isOpen, onClose, listingId }: ListingDetailModalProps) {
+export function ListingDetailModal({ isOpen, onClose, listingId, onListingUpdate }: ListingDetailModalProps) {
   const { user, isLoaded } = useUser();
   const { userData, isLoading: isLoadingUserData, actingAs } = useUserData();
   const router = useRouter();
@@ -59,25 +59,23 @@ export function ListingDetailModal({ isOpen, onClose, listingId }: ListingDetail
   const effectiveRole = actingAs || userData?.role;
 
   // Memoize owner check to avoid unnecessary recalculations
-  // Edit is only for: super admin OR customer who created the listing
+  // Edit/Delete is ONLY for customers who created the listing (not vendors, not superadmins)
   const isOwner = useMemo(() => {
-    if (isSuperAdmin) return true;
     if (!user?.id || !listing?.userId) return false;
-    // Only allow edit if user is the actual owner AND is a customer
+    // Only allow edit if user is the actual owner AND is a customer (not vendor, not superadmin acting as vendor)
     return user.id === listing.userId && effectiveRole === "customer";
-  }, [isSuperAdmin, user?.id, listing?.userId, effectiveRole]);
+  }, [user?.id, listing?.userId, effectiveRole]);
 
   // Check if user is a vendor (vendors can submit proposals)
-  // Check both userData role and publicMetadata as fallback
-  // Superadmin can also submit proposals (unless explicitly acting as customer)
+  // Only valid for superadmin or vendor role
   const isVendor = useMemo(() => {
+    // If explicitly acting as vendor, return true
+    if (actingAs === "vendor") return true;
     // Superadmin can submit proposals unless explicitly acting as customer
     if (isSuperAdmin && actingAs !== "customer") return true;
-    // First check actingAs role if set
+    // Check if user is a vendor - check effectiveRole first, then userData, then publicMetadata
     if (effectiveRole === "vendor") return true;
-    // Then check userData (preferred)
     if (userData?.role === "vendor") return true;
-    // Fallback to publicMetadata if userData is still loading or not available
     if (user?.publicMetadata?.role === "vendor") return true;
     return false;
   }, [effectiveRole, userData?.role, user?.publicMetadata?.role, isSuperAdmin, actingAs]);
@@ -233,6 +231,39 @@ export function ListingDetailModal({ isOpen, onClose, listingId }: ListingDetail
     }
   };
 
+  /**
+   * Handles status toggle (active/inactive) for listing owners
+   */
+  const handleToggleStatus = async (newStatus: string) => {
+    if (!listingId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/listings/${listingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        // Update parent listings state if callback provided
+        if (onListingUpdate && data.data) {
+          onListingUpdate(listingId, { status: newStatus });
+        }
+        // Refresh listing to show updated status
+        await refetch();
+      } else {
+        throw new Error(data.error || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error toggling listing status:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update listing status. Please try again.');
+      throw error;
+    }
+  };
+
   // Don't render if modal is closed
   if (!isOpen) return null;
 
@@ -256,11 +287,79 @@ export function ListingDetailModal({ isOpen, onClose, listingId }: ListingDetail
                 isOwner={isOwner}
                 onClose={onClose}
               onEdit={handleEdit}
+                onToggleStatus={handleToggleStatus}
               />
           </div>
 
+          {/* Submit Proposal Section - At the top, visible for all logged-in users */}
+          {/* Show "Submit Proposal" button if: user is logged in, is not the actual owner, and listing is not cancelled/completed */}
+          {(() => {
+            // Calculate if proposal button should be shown
+            // Show button for all logged-in users who aren't the owner
+            const isUserLoggedIn = !!user && isLoaded;
+            const isNotOwner = user?.id !== listing?.userId;
+            const status = (listing?.status || '').toLowerCase();
+            const isValidStatus = status !== "cancelled" && status !== "completed";
+            const shouldShow = isUserLoggedIn && isNotOwner && isValidStatus;
+            
+            // Check if user can actually submit (vendors/superadmin only)
+            // Superadmin can submit unless explicitly acting as customer
+            const superAdminCanSubmit = isSuperAdmin && actingAs !== "customer";
+            const canSubmit = isVendor || superAdminCanSubmit;
+            
+            // Always log for debugging (remove in production)
+            console.log("Proposal button debug (modal):", {
+              isUserLoggedIn,
+              isLoaded,
+              isVendor,
+              isSuperAdmin,
+              superAdminCanSubmit,
+              canSubmit,
+              isNotOwner,
+              listingStatus: listing?.status,
+              statusLower: status,
+              isValidStatus,
+              userId: user?.id,
+              listingUserId: listing?.userId,
+              effectiveRole,
+              userDataRole: userData?.role,
+              actingAs,
+              userEmail: user?.emailAddresses[0]?.emailAddress,
+              shouldShow,
+              allConditions: {
+                "user exists": !!user,
+                "isLoaded": isLoaded,
+                "isVendor": isVendor,
+                "isSuperAdmin": isSuperAdmin,
+                "superAdminCanSubmit": superAdminCanSubmit,
+                "canSubmit (vendor or superadmin)": canSubmit,
+                "not owner": isNotOwner,
+                "valid status": isValidStatus,
+              }
+            });
+            
+            if (!shouldShow) {
+              return null;
+            }
+            
+            return (
+            <div className="mb-4 pb-4 border-b-2 border-zinc-200 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg p-4" ref={proposalSectionRef}>
+              {showProposalForm ? (
+                <ProposalForm
+                  onSubmit={handleSubmitProposal}
+                  onCancel={() => setShowProposalForm(false)}
+                />
+              ) : (
+                <div className="flex justify-center">
+                  <SubmitProposalButton onClick={() => setShowProposalForm(true)} />
+                </div>
+              )}
+            </div>
+            );
+          })()}
+
           {/* Main Content: Single Column Layout */}
-              <div className="space-y-3" ref={modalContentRef}>
+              <div className="space-y-3 pb-6" ref={modalContentRef}>
                 <RequirementsSection listing={listing} />
                 <InstitutionContext listing={listing} />
                 <AdditionalNotes listing={listing} />
@@ -274,82 +373,17 @@ export function ListingDetailModal({ isOpen, onClose, listingId }: ListingDetail
                     <BusinessDetails listing={listing} />
                   </div>
                 </div>
-                
-                {/* Submit Proposal Section (Vendors only) */}
-                {/* Show "Submit Proposal" button if: user is logged in, is a vendor OR superadmin, is not the actual owner, and listing is not cancelled/completed */}
-                {(() => {
-                  // Calculate if proposal button should be shown
-                  // Allow vendors OR superadmin (unless acting as customer) to submit proposals
-                  const isUserLoggedIn = !!user && isLoaded;
-                  // Superadmin can submit unless explicitly acting as customer
-                  const superAdminCanSubmit = isSuperAdmin && actingAs !== "customer";
-                  const canSubmit = isVendor || superAdminCanSubmit;
-                  const isNotOwner = user?.id !== listing?.userId;
-                  const status = (listing?.status || '').toLowerCase();
-                  const isValidStatus = status !== "cancelled" && status !== "completed";
-                  const shouldShow = isUserLoggedIn && canSubmit && isNotOwner && isValidStatus;
-                  
-                  // Always log for debugging (remove in production)
-                  console.log("Proposal button debug (modal):", {
-                    isUserLoggedIn,
-                    isLoaded,
-                    isVendor,
-                    isSuperAdmin,
-                    superAdminCanSubmit,
-                    canSubmit,
-                    isNotOwner,
-                    listingStatus: listing?.status,
-                    statusLower: status,
-                    isValidStatus,
-                    userId: user?.id,
-                    listingUserId: listing?.userId,
-                    effectiveRole,
-                    userDataRole: userData?.role,
-                    actingAs,
-                    userEmail: user?.emailAddresses[0]?.emailAddress,
-                    shouldShow,
-                    allConditions: {
-                      "user exists": !!user,
-                      "isLoaded": isLoaded,
-                      "isVendor": isVendor,
-                      "isSuperAdmin": isSuperAdmin,
-                      "superAdminCanSubmit": superAdminCanSubmit,
-                      "canSubmit (vendor or superadmin)": canSubmit,
-                      "not owner": isNotOwner,
-                      "valid status": isValidStatus,
-                    }
-                  });
-                  
-                  if (!shouldShow) {
-                    return null;
-                  }
-                  
-                  return (
-                    <div className="pb-8" ref={proposalSectionRef}>
-                      {showProposalForm ? (
-                        <ProposalForm
-                          onSubmit={handleSubmitProposal}
-                          onCancel={() => setShowProposalForm(false)}
-                        />
-                      ) : (
-                        <div className="flex justify-center">
-                          <SubmitProposalButton onClick={() => setShowProposalForm(true)} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
 
                 {/* Show "View all proposals" button for customers who created the listing */}
                 {effectiveRole === "customer" && user?.id === listing?.userId && (
-                  <div className="pb-8">
+                  <div className="mt-6 pt-6 pb-6 border-t-2 border-zinc-300 bg-gradient-to-b from-zinc-50 to-white rounded-lg -mx-5 px-5">
                     <div className="flex justify-center">
                       <button
                         onClick={() => {
                           onClose();
                           router.push('/proposals');
                         }}
-                        className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all font-medium"
+                        className="w-full max-w-md px-4 py-3 bg-gradient-to-r from-blue-600 to-teal-600 text-white rounded-lg hover:from-blue-700 hover:to-teal-700 transition-all font-medium"
                       >
                         View all proposals
                       </button>

@@ -38,32 +38,30 @@ export default function ListingDetailPage() {
   
   // Check if user is super admin - check email first (most reliable), then userData, then publicMetadata
   const isSuperAdmin = useMemo(() => {
-    const userEmail = user?.emailAddresses[0]?.emailAddress;
+  const userEmail = user?.emailAddresses[0]?.emailAddress;
     if (userEmail === "hitesh.ms24@gmail.com") return true;
     if (userData?.role === "superadmin") return true;
     if (user?.publicMetadata?.role === "superadmin") return true;
     return false;
   }, [user?.emailAddresses, userData?.role, user?.publicMetadata?.role]);
   
-  // Edit is only for: super admin OR customer who created the listing
+  // Edit/Delete is ONLY for customers who created the listing (not vendors, not superadmins)
   const isOwner = useMemo(() => {
-    if (isSuperAdmin) return true;
     if (!user?.id || !listing?.userId) return false;
-    // Only allow edit if user is the actual owner AND is a customer
+    // Only allow edit if user is the actual owner AND is a customer (not vendor, not superadmin acting as vendor)
     return user.id === listing.userId && effectiveRole === "customer";
-  }, [isSuperAdmin, user?.id, listing?.userId, effectiveRole]);
+  }, [user?.id, listing?.userId, effectiveRole]);
   
   // Check if user is a vendor (vendors can submit proposals)
-  // Check both userData role and publicMetadata as fallback
-  // Superadmin can also submit proposals (unless explicitly acting as customer)
+  // Only valid for superadmin or vendor role
   const isVendor = useMemo(() => {
+    // If explicitly acting as vendor, return true
+    if (actingAs === "vendor") return true;
     // Superadmin can submit proposals unless explicitly acting as customer
     if (isSuperAdmin && actingAs !== "customer") return true;
-    // First check actingAs role if set
+    // Check if user is a vendor - check effectiveRole first, then userData, then publicMetadata
     if (effectiveRole === "vendor") return true;
-    // Then check userData (preferred)
     if (userData?.role === "vendor") return true;
-    // Fallback to publicMetadata if userData is still loading or not available
     if (user?.publicMetadata?.role === "vendor") return true;
     return false;
   }, [effectiveRole, userData?.role, user?.publicMetadata?.role, isSuperAdmin, actingAs]);
@@ -173,7 +171,7 @@ export default function ListingDetailPage() {
         onSidebarClose={() => setIsSidebarOpen(false)}
         isSidebarCollapsed={isSidebarCollapsed}
         onSidebarCollapseToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
+        />
     );
   }
 
@@ -186,7 +184,7 @@ export default function ListingDetailPage() {
         onSidebarClose={() => setIsSidebarOpen(false)}
         isSidebarCollapsed={isSidebarCollapsed}
         onSidebarCollapseToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
+        />
     );
   }
 
